@@ -1,19 +1,18 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Tue, 3 Nov 2026 21:27:11 +0800
+Date: Wed, 4 Nov 2026 20:23:22 +0800
 Subject: [PATCH] Display rate above 60: the measured-rate mode across present,
- fpslock, vsync and the front end
+  fpslock, vsync and the front end
 
-The 120 Hz display-rate mode (patch port 0077, group O of the port inventory), carried from the Tiaoge-tou/nxnative fork, with both games' display_hz rows.
+The 120 Hz display-rate mode (patch port 0079, group O of the port inventory), carried from the Tiaoge-tou/nxnative fork, with both games' display_hz rows.
 
-hle_nvn.c defines dm_display_hz / dm_display_set_hz (declared in patch 0075): the front end's measured rate drives the present tick, and the handheld stale-crop fix in nvnWindowSetCrop rides along (its DM_DIAG_STATE_OFF readback, a bisect diagnostic, is not carried: the green-screen switch group stays out of this queue). nvn_mtl.m switches the present link to 120 Hz while the mode is driven and counts intervals and vsyncs at the driven rate. hle_sdk16.c ticks the vi vsync event at the measured rate. hle_fpslock.c gains the Silksong row (Unity targetFrameRate, an int32 field) and the display-rate servo for int32 fields only: the measured rate overwrites the game's -1 sentinel while driven and the -1 goes back on release; with no fixed target the tick now continues for such rows instead of stopping, and a double field is never written without a fixed target. This tree has no dynamically scanned rows, so the kind test is the servo's eligibility test.
+hle_nvn.c defines dm_display_hz / dm_display_set_hz (declared in patch 0077): the front end's measured rate drives the present tick, and the handheld stale-crop fix in nvnWindowSetCrop rides along (its DM_DIAG_STATE_OFF readback, a bisect diagnostic, is not carried: the green-screen switch group stays out of this queue). nvn_mtl.m switches the present link to 120 Hz while the mode is driven and counts intervals and vsyncs at the driven rate. hle_sdk16.c ticks the vi vsync event at the measured rate. hle_fpslock.c gains the Silksong row (Unity targetFrameRate, an int32 field) and the display-rate servo for int32 fields only: the measured rate overwrites the game's -1 sentinel while driven and the -1 goes back on release; with no fixed target the tick now continues for such rows instead of stopping, and a double field is never written without a fixed target. This tree has no dynamically scanned rows, so the kind test is the servo's eligibility test.
 
-front_ios.m completes the wiring this queue owes from earlier groups: it publishes the measured render sizes (DM_RENDER_WIDTH / DM_RENDER_WIDTH_HD, the front half of patch 0075's host service), measures the screen rate for the launcher's frame-rate choice (SS_DISPLAY_HZ, including the lowered 1912x880 tier) and hands it to the host, and carries the Hades II HUD script fix, the front-end half of patch 0074's group.
+front_ios.m completes the wiring this queue owes from earlier groups: it publishes the measured render sizes (DM_RENDER_WIDTH / DM_RENDER_WIDTH_HD, the front half of patch 0077's host service), measures the screen rate for the launcher's frame-rate choice (SS_DISPLAY_HZ, including the lowered 1912x880 tier) and hands it to the host, and carries the Hades II HUD script fix, the front-end half of patch 0076's group.
 
 Upstream-Status: fork-only
 Reason: 120 Hz display-rate mode for Silksong and Hades II, paced by the measured screen rate (PROJECT.md Phase 2)
 Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
-
 ---
  dm/games/010013C00E930000/game.tsv |  4 ++
  dm/games/0100A00019DE0000/game.tsv |  5 ++
@@ -21,8 +20,8 @@ Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
  dm/gfx/nvn/nvn_mtl.m               | 19 ++++--
  dm/host/hle_fpslock.c              | 44 ++++++++++----
  dm/host/hle_sdk16.c                | 10 +++-
- dm/ios/Sources/front_ios.m         | 93 ++++++++++++++++++++++++++++++
- 7 files changed, 201 insertions(+), 20 deletions(-)
+ dm/ios/Sources/front_ios.m         | 94 ++++++++++++++++++++++++++++++
+ 7 files changed, 202 insertions(+), 20 deletions(-)
 
 diff --git a/dm/games/010013C00E930000/game.tsv b/dm/games/010013C00E930000/game.tsv
 index 0b28cad..13ce76a 100644
@@ -53,10 +52,10 @@ index 06616ed..de78df6 100644
  # The NPDM declares no system resource (META +0x14 = 0): the game uses SetHeapSize. It asks for 3.10 GB (pool − used memory), which the 3.25 GB heap region of
  # the 4 GB layout holds. main carries an 82 MB bss: the rewritten modules take more than the default 64 MB of used memory, so SetHeapSize(pool − 64 MB) would not fit
 diff --git a/dm/gfx/nvn/hle_nvn.c b/dm/gfx/nvn/hle_nvn.c
-index 5436cc7..d29fbf3 100644
+index a5262b5..7264718 100644
 --- a/dm/gfx/nvn/hle_nvn.c
 +++ b/dm/gfx/nvn/hle_nvn.c
-@@ -1368,8 +1368,21 @@ NVN(nvnWindowSetPresentInterval, void, NVNwindow *w, int v) {
+@@ -1371,8 +1371,21 @@ NVN(nvnWindowSetPresentInterval, void, NVNwindow *w, int v) {
      ((win_t *)w)->interval = v;
  }
  NVN(nvnWindowSetCrop, void, NVNwindow *w, int x, int y, int ww, int hh) {
@@ -80,7 +79,7 @@ index 5436cc7..d29fbf3 100644
      memcpy(o->crop, v, sizeof v);
  }
  NVN(nvnWindowGetCrop, void, const NVNwindow *w, NVNrectangle *r) {   // Bayonetta 3 reads it back every few frames; before any SetCrop it is the whole first texture, as NVN starts it
-@@ -1672,6 +1685,31 @@ static void sleep_until_ns(uint64_t dl) {   // absolute time on the monotonic cl
+@@ -1681,6 +1694,31 @@ static void sleep_until_ns(uint64_t dl) {   // absolute time on the monotonic cl
  static int g_hz = -1, g_display_mode;
  static _Atomic int g_game_itv = 1;   // when pacing by the game's interval, the interval the game currently sets (in game mode 2 = 30 fps; nvn_game_fps reports it to the graphics layer, which sets the display link from it)
  void nvn_present_config(int hz, int display_mode) { g_hz = hz; g_display_mode = display_mode; }
@@ -109,10 +108,10 @@ index 5436cc7..d29fbf3 100644
 +    mtl_present_link_120(hz == 120);
 +    LOG("[nvn] display rate %s (the front end measured the screen at %d Hz)", hz == 120 ? "120 Hz" : "released, back to 60 Hz", hz);
 +}
- static _Atomic uint64_t g_itv2_since;   // start of the game's current run of intervals >= 2 (now_ns; 0 = it is 1 now)
- // The frame rate the game itself asks for: 30 in game mode when the present interval has been >= 2 for a full second (the display link follows at 30 Hz, mtl_fps_target), otherwise 60; back to 60 at once when the interval returns to 1. Intervals of 3 or more (20 fps or less) have no matching display-link mode and run at 30.
- // The one-second hold: Mario 1.2.1 picks the interval from the previous frame's time (main+0xcfd24), setting 2 for the frame after a slow one and then 1 again (123 times in two minutes on an iPhone). Following that frame by frame would flap the display-link mode;
-@@ -1746,8 +1784,10 @@ static void present_cfg(const win_t *o) {
+ static _Atomic uint64_t g_itv2_since;   // start of the game's current run of even intervals >= 2 (now_ns; 0 = it is 1 or odd now)
+ // The frame rate the game itself asks for: 30 in game mode when the present interval has been 2 (or another even interval) for a full second (the display link follows at 30 Hz, mtl_fps_target), otherwise 60; back to 60 at once when the interval returns to 1 or turns odd.
+ // An odd interval has no whole number of 30 Hz ticks: interval 3 took (3 + 1) / 2 = 2 ticks (mtl_link_wait_tick), 66.7 ms a frame where the game asked for 50 (Donkey Kong Bananza, which steps 2 → 3 when its GPU
+@@ -1757,8 +1795,10 @@ static void present_cfg(const win_t *o) {
      if (g_hz >= 0) return;
      // The interval mode comes from the game profile (present_interval, default game): whether frames follow the present interval the game sets depends on whether the game's logic counts frames, which differs per game. Environment variables override it, and can override the fixed 60 Hz.
      int scr = mtl_display_hz();
@@ -125,7 +124,7 @@ index 5436cc7..d29fbf3 100644
      // with a fixed hard floor of 60 fps; the logic stays at 25 ticks, and the client's frame-counted UI logic is unaffected -
      // with the same save and the same input, the UI message streams of the two modes match message by message. Proof (before character select): r9 game / display 60 ×3 / display 120 ×2, 6 groups in total, uicmp consistent
 diff --git a/dm/gfx/nvn/nvn_mtl.m b/dm/gfx/nvn/nvn_mtl.m
-index 80a14b4..4df6438 100644
+index 682a330..b917c82 100644
 --- a/dm/gfx/nvn/nvn_mtl.m
 +++ b/dm/gfx/nvn/nvn_mtl.m
 @@ -122,6 +122,12 @@ static uint64_t g_link_empty;   // Under g_pq_mu: ticks that found no new frame
@@ -151,7 +150,7 @@ index 80a14b4..4df6438 100644
      const char *latency = getenv("DM_PRESENT_LATENCY");
      if (latency && atoi(latency) > 0) g_present_latency = atoi(latency);
      g_res_check_on = getenv("DM_RES_CHECK") != NULL;
-@@ -12433,10 +12440,11 @@ int mtl_link_wait_tick(int vsyncs, uint64_t timeout_ns) {
+@@ -12791,10 +12798,11 @@ int mtl_link_wait_tick(int vsyncs, uint64_t timeout_ns) {
      // Wait for the display link only when running faster than the display: if a display-link tick has already passed since the previous frame started work (this frame is already behind), start immediately instead of waiting in vain for the next display-link tick --
      // otherwise when the frame time is slightly more than one display-link period it would "miss the tick -> wait another whole tick", locking the frame rate straight to half (measured on Mac under windowed load: runs of dropped frames)
      // How many display-link ticks one frame takes: the game's present interval (vsyncs, 60 Hz) times 1 with a 60 Hz display link, times 2 with a 120 Hz one, halved and rounded up at 30 Hz.
@@ -164,7 +163,7 @@ index 80a14b4..4df6438 100644
  }
  // The display link's rate: 120 Hz (DM_PRESENT_LINK=2), 60, or 30 in power-saving mode
  int mtl_link_rate(void) { return g_link_mode == 3 ? 30 : g_link_mode == 2 ? 120 : 60; }
-@@ -12455,11 +12463,12 @@ int mtl_link_wait_ticks(int ticks, uint64_t timeout_ns) {
+@@ -12813,11 +12821,12 @@ int mtl_link_wait_ticks(int ticks, uint64_t timeout_ns) {
      pthread_mutex_unlock(&g_link_mu); return 1;
  }
  
@@ -181,7 +180,7 @@ index 80a14b4..4df6438 100644
      if (*seen > g_link_tick_n || g_link_tick_n > *seen + 4 * step) *seen = g_link_tick_n;   // first call, or far behind (a stall): from the current tick on, no burst
      struct timespec ts; clock_gettime(CLOCK_REALTIME, &ts);
 diff --git a/dm/host/hle_fpslock.c b/dm/host/hle_fpslock.c
-index 0b70203..2cb3e8a 100644
+index 4678d3c..4cf0bc0 100644
 --- a/dm/host/hle_fpslock.c
 +++ b/dm/host/hle_fpslock.c
 @@ -1,5 +1,6 @@
@@ -190,9 +189,9 @@ index 0b70203..2cb3e8a 100644
 +// fps_target (DM_FPS_TARGET overrides; 0 = leave the game's own limit) -- or, for an int32 frame-rate field only, the display rate while the front end's measured
 +// 120 Hz drives the pacing (dm_display_hz, hle_nvn.c), the game's own value going back when the mode releases -- the same key that drives Tears of the Kingdom's frame step (loader.c install_fps_state). Called on every present
  // (hle_nvn.c); the game sets the values after boot and may set them again, so each is written whenever it differs. Fixed addresses: each row runs only on the main build it was found in (AGENTS.md).
+ // A target frame rate the game steps by needs no row either: the rewriter finds it by its readers in any build (dm/tools/fps_target.py, main's fixups FPS_TARGET_PTR / FPS_TARGET_FIELD).
  // Unreal Engine needs no row: the rewriter finds its console variables by their registered names in any build (dm/tools/ue_cvar.py, main's fixups UE_CVAR:<name>), and the host writes
- // the frame limit, the profile's ue_fps_cvar (t.MaxFPS, or a game's own variable its settings apply to t.MaxFPS: SHIN MEGAMI TENSEI V: Vengeance's Project.FrameRateLimit), and the
-@@ -34,6 +35,11 @@ static const lock_t k_locks[] = {
+@@ -35,6 +36,11 @@ static const lock_t k_locks[] = {
      // started; the limiter (main+0x7a3e70) runs jobs or sleeps until 33.333 ms have passed, the float at main+0x13c94dc (read only there, at main+0x7a3ea8 and main+0x7a3f18), and the game
      // steps by the time that really passed. The game asks for present interval 2 too, which the profile's present_interval display ignores; both are needed
      { "79e5950ffa85acf63e28c9aec051eac2", "NLG frame limiter target", 0, 0x13c94dc, MS_F32, 1 },
@@ -204,16 +203,16 @@ index 0b70203..2cb3e8a 100644
      // Need for Speed: Hot Pursuit Remastered 1.0.3: Criterion's frame timing. A uint32 in main's bss (main+0xf0043c) selects the engine's 60 fps mode, in which it takes its frame time from
      // the timer object at [main+0xed96a8]: +0x30 the frame in system ticks (19.2 MHz, 640,000 at 30 fps) and +0x28 a tenth of it; the game's own step, at [main+0xeffc60] +0x30 (2D) and +0x50
      // (3D), is a float of seconds per frame. Its limiter, a spin on the system tick at main+0x483588..+0x4835a4, is cut by the rewriter (patches.py). From masagrator's FPSLocker config for this
-@@ -212,7 +218,7 @@ static void lock_find(void) {
+@@ -224,7 +230,7 @@ static void lock_find(void) {
  int dm_fps_lock_engine(void) { pthread_once(&g_found, lock_find); return nrow || nier || fb.n; }
  void dm_fps_lock_tick(void) {
      dynamic_resolution_tick();   // separate from the FPS cap
--    static int state = -2, nlog[NLOCKS + 3], target; static const char *src;
-+    static int state = -2, nlog[NLOCKS + 3], fixed, disp[NLOCKS + 3], target; static const char *src;
+-    static int state = -2, nlog[NLOCKS + 4], target; static const char *src;
++    static int state = -2, nlog[NLOCKS + 4], fixed, disp[NLOCKS + 4], target; static const char *src;
      if (state == -1) return;
      if (state == -2) {
          state = -1; pthread_once(&g_found, lock_find);
-@@ -221,11 +227,17 @@ void dm_fps_lock_tick(void) {
+@@ -233,11 +239,17 @@ void dm_fps_lock_tick(void) {
          if (t != 0 && t != 30 && t != 60) { LOG("[RED] DM_FPS_TARGET=%s: must be 0, 30 or 60; leaving the game's frame limit", e); t = 0; }
          if (t && ue_missing) LOG("[RED] main: Unreal %s not found by the rewriter (ue_cvar.py NAMES; game profile ue_fps_cvar): the game's own frame limit stays", DM_GAME_UE_FPS_CVAR);
          if (!nrow && !nier && !fb.n) return;
@@ -235,7 +234,7 @@ index 0b70203..2cb3e8a 100644
          // NieR:Automata US/EU 1.0.3 (3c10ec35c5ef4c3686b4053afb0e58e7):
          // - [base + 0x192be00] points to the NVN graphics device object whose +0x9c160 holds the present interval (1 = 60 FPS, 2 = 30 FPS),
          //   and base + 0x192c304 (+0x504) holds the requested interval mode (0 = 60 FPS, 1 = 30 FPS).
-@@ -247,11 +259,16 @@ void dm_fps_lock_tick(void) {
+@@ -259,11 +271,16 @@ void dm_fps_lock_tick(void) {
              }
          }
      }
@@ -253,7 +252,7 @@ index 0b70203..2cb3e8a 100644
              for (int c = 0; c < L->copies; c++) {
                  uint64_t a = obj + L->field + 8 * (uint64_t)c; double cur, want = target;
                  if (!rd(a, &cur, sizeof cur)) break;
-@@ -265,6 +282,11 @@ void dm_fps_lock_tick(void) {
+@@ -277,6 +294,11 @@ void dm_fps_lock_tick(void) {
          for (int c = 0; c < L->copies; c++) {
              uint64_t a = obj + L->field + 4 * (uint64_t)c; uint32_t cur, want; char was[16];
              if (!rd(a, &cur, sizeof cur)) break;
@@ -265,7 +264,7 @@ index 0b70203..2cb3e8a 100644
              if (L->kind == FPS_F32 || L->kind == MS_F32) {
                  int ms = L->kind == MS_F32; float f, w = ms ? ms_want(target) : (float)target; memcpy(&f, &cur, sizeof f); memcpy(&want, &w, sizeof want);
                  if (cur == want || !(ms ? f >= 8 && f <= 100 : f >= 10 && f <= 120)) continue;   // already set, or not set yet (RE Engine: 6000 at boot; Unreal: 0 = no limit until the config sets it)
-@@ -284,18 +306,20 @@ void dm_fps_lock_tick(void) {
+@@ -296,18 +318,20 @@ void dm_fps_lock_tick(void) {
              } else {
                  int fps = L->kind == FPS_I32;
                  want = fps ? (uint32_t)target : 60 / (uint32_t)target;
@@ -290,10 +289,10 @@ index 0b70203..2cb3e8a 100644
      }
  }
 diff --git a/dm/host/hle_sdk16.c b/dm/host/hle_sdk16.c
-index 90760af..eb20da2 100644
+index 8547ab7..061cec0 100644
 --- a/dm/host/hle_sdk16.c
 +++ b/dm/host/hle_sdk16.c
-@@ -296,7 +296,7 @@ HLE_FORCE("_ZN2nn3nfp29StartNicknameAndOwnerSettingsEPNS0_12DeviceHandleEPbPNS0_
+@@ -299,7 +299,7 @@ HLE_FORCE("_ZN2nn3nfp29StartNicknameAndOwnerSettingsEPNS0_12DeviceHandleEPbPNS0_
  HLE_FORCE("_ZN2nn3nfp29StartNicknameAndOwnerSettingsEPNS0_12DeviceHandleEPbPNS0_12RegisterInfoERKNS0_24AmiiboSettingsStartParamERKNS0_7TagInfoERKS4_", "amiibo nickname and owner settings applet (with the old register info): no tag", Result, h_nfp_Nick2, NfpDeviceHandle *h, uint8_t *changed, void *reg, const void *p, const void *tag, const void *old) { (void)h; (void)reg; (void)p; (void)tag; (void)old; if (changed) *changed = 0; return nfp_no_tag("StartNicknameAndOwnerSettings"); }
  
  // ---------- vi: vsync event ----------
@@ -302,7 +301,7 @@ index 90760af..eb20da2 100644
  // Switch's follows its display: Super Mario Galaxy 2 runs the Wii's VI retrace (and with it each emulated frame) on this event, and on a clock of the host's own the frames drifted
  // against the screen's vsyncs, two in some display-link ticks and none in others (iPhone: about one tick in seven, a stutter the frame-rate counter showed as 50 to 60).
  // One thread per binding lifetime: repeated requests must not double its rate.
-@@ -322,7 +322,13 @@ static void *vsync_thread(void *arg) {
+@@ -325,7 +325,13 @@ static void *vsync_thread(void *arg) {
      const char *e = getenv("DM_VSYNC_HZ"); double hz = e ? atof(e) : 60.0; if (hz <= 0) hz = 60.0;
      uint64_t period = (uint64_t)(1e9 / hz), next = now_ns() + period, seen = 0;
      for (;;) {
@@ -318,10 +317,10 @@ index 90760af..eb20da2 100644
          if (!vsync_tick(v)) break;
          next += period; if (now_ns() > next + 4 * period) next = now_ns() + period;   // do not try to catch up when far behind
 diff --git a/dm/ios/Sources/front_ios.m b/dm/ios/Sources/front_ios.m
-index 57b08e9..a22786d 100644
+index a6675b2..ae58770 100644
 --- a/dm/ios/Sources/front_ios.m
 +++ b/dm/ios/Sources/front_ios.m
-@@ -70,6 +70,90 @@ static void tv_attach(void);
+@@ -100,6 +100,91 @@ static void tv_attach(void);
  @end
  static DmRootVC *g_root;
  static void launcher_done(void) { [g_root startGame]; }
@@ -376,6 +375,7 @@ index 57b08e9..a22786d 100644
 +    if (++self.ticks < 30) return;   // the rate must hold for 30 display frames before the host follows it, either way
 +    self.cur = hz; self.ticks = 0;
 +    dm_display_set_hz(hz);
++}
 +@end
 +
 +// Hades II's HUD lays out against the size its script computes in RunLogic.lua (UpdateConfigOptionCache), which reads the engine's
@@ -410,10 +410,10 @@ index 57b08e9..a22786d 100644
 +    else LOG("[RED] front end: %s could not be written; HUD script left as is", path.UTF8String);
 +}
  @implementation DmRootVC
+ - (void)loadView { self.view = [DmRootView new]; }
  - (void)showHint:(NSString *)text {   // why the game cannot start, centered over the black screen
-     UILabel *lb = [[UILabel alloc] initWithFrame:CGRectInset(self.view.bounds, 40, 40)];
-@@ -122,6 +206,15 @@ static void launcher_done(void) { [g_root startGame]; }
-     if (self.fps) [self.view addSubview:self.fps];
+@@ -176,6 +261,15 @@ static void launcher_done(void) { [g_root startGame]; }
+     [self showFPS:fps ? atoi(fps) != 0 : [[NSBundle.mainBundle objectForInfoDictionaryKey:@"DMShowFPS"] boolValue]];
      [self.view setNeedsLayout]; [self.view layoutIfNeeded];
      UIApplication.sharedApplication.idleTimerDisabled = YES;
 +    if (front_ios_display_lowered()) {   // the frame-rate choice's lowered tier, unless an env file sets the size itself

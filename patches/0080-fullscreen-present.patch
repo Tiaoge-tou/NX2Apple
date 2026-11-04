@@ -1,10 +1,10 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Tue, 3 Nov 2026 21:28:21 +0800
+Date: Wed, 4 Nov 2026 20:37:16 +0800
 Subject: [PATCH] Fullscreen present: the present fills the screen, an oversize
- full-frame crop clamps, a narrow screen windows the stock frame
+  full-frame crop clamps, a narrow screen windows the stock frame
 
-The fullscreen present (patch port 0078, group J of the port inventory), carried from the Tiaoge-tou/nxnative fork.
+The fullscreen present (patch port 0080, group J of the port inventory), carried from the Tiaoge-tou/nxnative fork.
 
 nvn_mtl.m: DM_FULLSCREEN (default on, an env file's explicit 0 asks for the native-aspect fit) makes the present viewport fill the whole target; a full-frame crop from the origin that exceeds the texture is clamped to the texture instead of dropped (a guest whose declared frame is larger than the texture it rendered into showed a black screen while running); on a narrower-than-16:9 screen a stock 720-line frame is shown as a left-anchored window at the screen's own aspect instead of stretched. A viewport diagnostic line rides along. The classic-present bisect switch of the same file is not carried (the green-screen switch group stays out of this queue), and neither are the dynamic-class hunks (the closed iOS 16-25 line).
 
@@ -13,17 +13,16 @@ front_ios.m: the game view takes the whole screen; the compositor fits the pictu
 Upstream-Status: fork-only
 Reason: Adaptive fullscreen present for the wide render sizes (PROJECT.md Phase 2)
 Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
-
 ---
  dm/gfx/nvn/nvn_mtl.m       | 31 ++++++++++++++++++++++++++++++-
- dm/ios/Sources/front_ios.m |  8 +++++++-
- 2 files changed, 37 insertions(+), 2 deletions(-)
+ dm/ios/Sources/front_ios.m |  8 ++++++++
+ 2 files changed, 38 insertions(+), 1 deletion(-)
 
 diff --git a/dm/gfx/nvn/nvn_mtl.m b/dm/gfx/nvn/nvn_mtl.m
-index 4df6438..c6c61b2 100644
+index b917c82..4a84e8a 100644
 --- a/dm/gfx/nvn/nvn_mtl.m
 +++ b/dm/gfx/nvn/nvn_mtl.m
-@@ -11701,6 +11701,9 @@ static id<MTLTexture> present_raw_src(id<MTLTexture> src) {
+@@ -11941,6 +11941,9 @@ static id<MTLTexture> present_raw_src(id<MTLTexture> src) {
      if (!v) { RED_ONCE(69, "present: cannot create a non-sRGB view of the sRGB swapchain texture (format %lu); presenting the decoded values", (unsigned long)src.pixelFormat); return src; }
      return v;
  }
@@ -33,7 +32,7 @@ index 4df6438..c6c61b2 100644
  // The rectangle of the canvas (dw x dh) the picture (cw x ch) is drawn into: the picture's aspect ratio kept and centred, black bars in the rest (no stretching when the screen's ratio
  // differs from the game's, e.g. iPhone about 19.5:9 against the game's 16:9); when the ratios differ by under 1 % (the remainder from a game width that is a multiple of 8 in the
  // full-screen setup, e.g. 1952x900 against 2868x1320 differs by 0.17 %) the whole canvas, leaving no border of a few pixels
-@@ -11708,14 +11711,28 @@ static MTLViewport present_viewport(double cw, double ch, double dw, double dh)
+@@ -11948,14 +11951,28 @@ static MTLViewport present_viewport(double cw, double ch, double dw, double dh)
      double s = fmin(dw / cw, dh / ch);
      MTLViewport vp = {floor((dw - cw * s) / 2), floor((dh - ch * s) / 2), round(cw * s), round(ch * s), 0, 1};
      if (fabs((dw / dh) / (cw / ch) - 1) < 0.01) vp = (MTLViewport){0, 0, dw, dh, 0, 1};
@@ -63,7 +62,7 @@ index 4df6438..c6c61b2 100644
          MLOG("[RED] present crop out of bounds: %d,%d %dx%d / source texture %lux%lu", crop[0], crop[1], crop[2], crop[3], (unsigned long)src.width, (unsigned long)src.height); return 0;
      }
      r[0] = crop[0]; r[1] = crop[1]; r[2] = crop[2]; r[3] = crop[3]; return 1;
-@@ -11723,6 +11740,16 @@ static int present_crop_rect(id<MTLTexture> src, const int crop[4], NSUInteger r
+@@ -11963,6 +11980,16 @@ static int present_crop_rect(id<MTLTexture> src, const int crop[4], NSUInteger r
  static int present_encode(id<MTLCommandBuffer> cb, id<MTLTexture> src, id<MTLTexture> dst, const int crop[4]) {
      NSUInteger r[4]; if (!present_crop_rect(src, crop, r)) return 0;
      NSUInteger cx = r[0], cy = r[1], cw = r[2], ch = r[3];
@@ -80,7 +79,7 @@ index 4df6438..c6c61b2 100644
      static uint64_t last_crop[8]; uint64_t meta[8] = {src.width, src.height, cx, cy, cw, ch, dst.width, dst.height};
      if (memcmp(meta, last_crop, sizeof meta)) { memcpy(last_crop, meta, sizeof meta);
          MLOG("present crop: source texture %lux%lu, valid %lu,%lu %lux%lu → target %lux%lu", (unsigned long)src.width, (unsigned long)src.height,
-@@ -11732,6 +11759,8 @@ static int present_encode(id<MTLCommandBuffer> cb, id<MTLTexture> src, id<MTLTex
+@@ -11972,6 +11999,8 @@ static int present_encode(id<MTLCommandBuffer> cb, id<MTLTexture> src, id<MTLTex
      double dw = dst.width, dh = dst.height;
      MTLViewport vp = present_viewport(cw, ch, dw, dh);
      int full = vp.originX == 0 && vp.originY == 0 && vp.width == dw && vp.height == dh;
@@ -90,21 +89,21 @@ index 4df6438..c6c61b2 100644
      if (memcmp(last_vp, &vp, sizeof last_vp)) { memcpy(last_vp, &vp, sizeof last_vp);
          MLOG("present viewport %.0f,%.0f %.0fx%.0f / canvas %.0fx%.0f (game image %lux%lu)", vp.originX, vp.originY, vp.width, vp.height, dw, dh, (unsigned long)src.width, (unsigned long)src.height); }
 diff --git a/dm/ios/Sources/front_ios.m b/dm/ios/Sources/front_ios.m
-index a22786d..16e2f9f 100644
+index ae58770..27a8bee 100644
 --- a/dm/ios/Sources/front_ios.m
 +++ b/dm/ios/Sources/front_ios.m
-@@ -221,7 +221,13 @@ static void front_ios_hud_script_fix(int width) {
- - (void)viewDidLayoutSubviews {
-     [super viewDidLayoutSubviews];
-     CGRect b = self.view.bounds; if (!self.game) return;
--    if (self.game.superview == self.view) self.game.frame = fit_16_9(b);   // on a TV the TV's view lays it out
-+    // The game view always takes the whole screen. The compositor (nvn_mtl's present) fits the game's
-+    // actual picture inside it keeping the picture's own aspect ratio, or fills the screen under
-+    // DM_FULLSCREEN. Fitting the view itself to a fixed 16:9 here shrank the picture twice for games
-+    // that render wider than 16:9: once by the narrower view, then again by the compositor fitting
-+    // their wider picture into that view (black bars on all four sides, height included).
-+    // With a TV connected the game view sits in the TV's view instead, which lays it out there (DmTVVC).
-+    if (self.game.superview == self.view) self.game.frame = b;
-     if (self.fps) {   // the top row's free stretch: right of DmGamepad.m's L3 key (102 + 17 of its units from the safe edge), level with − / + (22 units down); u is its unit
-         CGRect s = UIEdgeInsetsInsetRect(b, self.view.safeAreaInsets); CGFloat u = MIN(b.size.height / 430.0, 1.3);
-         self.fps.frame = CGRectMake(floor(CGRectGetMinX(s) + 130 * u), floor(CGRectGetMinY(s) + 22 * u - 11), 64, 22);
+@@ -291,6 +291,14 @@ static void front_ios_hud_script_fix(int width) {
+     UIEdgeInsets gameInsets = dm_game_safe_insets(b, self.view.safeAreaInsets, duoPortrait);
+     BOOL onTV = self.game.superview != self.view;   // the TV's view lays the picture out; the phone is all pad
+     DmLayout layout = onTV ? dm_layout_pad_only(b) : dm_layout_picture(dm_layout(b, gameInsets, self.partiallyOpen, division), b, self.fill);
++    // This fork: in the overlay layout the game view always takes the whole screen (the pre-layout-system
++    // fit_16_9 frame, patch fullscreen-present). The compositor (nvn_mtl's present) fits the game's actual
++    // picture inside it keeping the picture's own aspect ratio, or fills the screen under DM_FULLSCREEN.
++    // Fitting the view itself to a fixed 16:9 here shrank the picture twice for games that render wider
++    // than 16:9: once by the narrower view, then again by the compositor fitting their wider picture into
++    // that view (black bars on all four sides, height included). The split layout (a fold) keeps the
++    // layout system's own picture area, and on a TV the TV's view lays the game out there (DmTVVC).
++    if (!onTV && !layout.separated) layout.game = b;
+     if (!onTV) self.game.frame = layout.game;
+     layout.topSafeOnly = duoPortrait;
+     NSString *line = [NSString stringWithFormat:@"%@, hinge %ld%s, divisions %@, picture %@, controls %@", onTV ? @"pad only (picture on the TV)" : layout.separated ? @"split" : self.fill ? @"overlay, Fill" : @"overlay",

@@ -1,12 +1,12 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Tue, 3 Nov 2026 21:01:05 +0800
-Subject: [PATCH] File layer: serve_patch byte slots, and the RomFS overlay on
+Date: Wed, 4 Nov 2026 20:00:05 +0800
+Subject: [PATCH] File layer: serve_patch byte slots, and the RomFS overlay on 
  any image mount
 
-hle_fs.c gains the serve_patch mechanism (patch port 0073, group K of the port inventory), carried from the Tiaoge-tou/nxnative fork.
+hle_fs.c gains the serve_patch mechanism (patch port 0075, group K of the port inventory), carried from the Tiaoge-tou/nxnative fork.
 
-A profile's serve_patch spec (game.py, patch 0072) names byte slots in a game file whose served value depends on the operation mode: ReadFile substitutes the mode's value in the buffer it returns, only when the bytes read are one of the known values, and the file on disk is never touched. A slot may name a stock pattern first, mark its docked value computed from the render width (a * value), or serve the mode's render width as four ASCII digits (a # value). Groups may be gated to narrow or wide screens. With no serve_patch in the profile the mechanism parses an empty spec and never engages.
+A profile's serve_patch spec (game.py, patch 0074) names byte slots in a game file whose served value depends on the operation mode: ReadFile substitutes the mode's value in the buffer it returns, only when the bytes read are one of the known values, and the file on disk is never touched. A slot may name a stock pattern first, mark its docked value computed from the render width (a * value), or serve the mode's render width as four ASCII digits (a # value). Groups may be gated to narrow or wide screens. With no serve_patch in the profile the mechanism parses an empty spec and never engages.
 
 mount_ex also takes DM_ROMFS_OVERLAY on any mount of a RomFS image now, not only the one named rom: a game may mount its files under another name (Dark Souls mounts system), and the overlay folder shadows image entries by path there too. Without the env var nothing changes.
 
@@ -15,13 +15,12 @@ No profile in this tree sets serve_patch yet: the Silksong and Hades II rows lan
 Upstream-Status: fork-only
 Reason: Mode-dependent byte serving for Silksong and Hades II files, plus the RomFS overlay on any image mount (PROJECT.md Phase 2)
 Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
-
 ---
  dm/host/hle_fs.c | 122 ++++++++++++++++++++++++++++++++++++++++++++++-
  1 file changed, 121 insertions(+), 1 deletion(-)
 
 diff --git a/dm/host/hle_fs.c b/dm/host/hle_fs.c
-index a7e4c9c..458ac20 100644
+index 3c232b4..21d46c9 100644
 --- a/dm/host/hle_fs.c
 +++ b/dm/host/hle_fs.c
 @@ -229,7 +229,11 @@ static Result mount_ex(const char *name, const char *dir, int ro, int txn) {
@@ -37,9 +36,9 @@ index a7e4c9c..458ac20 100644
      }
      g_nmnt++;
      pthread_mutex_unlock(&g_lock);
-@@ -724,6 +728,118 @@ HLE_FORCE("_ZN2nn2fs6CommitEPKcRKNS0_12CommitOptionE", "fsp-srv; same as Commit
- HLE_FORCE("_ZN2nn2fs14CommitSaveDataEPKc", "fsp-srv; same as Commit (SDK 11's old name)", Result, h_fs_CommitSaveData, const char *name) { return h_fs_Commit(name); }
- HLE_FORCE("_ZN2nn2fs7UnmountEPKc", "fsp-srv; the mount table is permanent, unmounting is a no-op", void, h_fs_Unmount, const char *name) { (void)name; }
+@@ -736,6 +740,118 @@ HLE_FORCE("_ZN2nn2fs7UnmountEPKc", "fsp-srv; host mounts are permanent, a no-op;
+     sdk_unmount(name);
+ }
  
 +// ---------- Serve patches (profile serve_patch) ----------
 +// A profile may declare byte slots in a game file whose served value depends on the operation mode
@@ -156,7 +155,7 @@ index a7e4c9c..458ac20 100644
  // ---------- Files ----------
  HLE_FORCE("_ZN2nn2fs8OpenFileEPNS0_10FileHandleEPKci", "fsp-srv → open(2)", Result, h_fs_OpenFile, uint64_t *out, const char *path, int mode) { dm_thread_service_request();
      int mi; int64_t k;
-@@ -735,6 +851,7 @@ HLE_FORCE("_ZN2nn2fs8OpenFileEPNS0_10FileHandleEPKci", "fsp-srv → open(2)", Re
+@@ -747,6 +863,7 @@ HLE_FORCE("_ZN2nn2fs8OpenFileEPNS0_10FileHandleEPKci", "fsp-srv → open(2)", Re
          if ((ent->flags & IMG_ENT_DAMAGED) && !(__atomic_fetch_or(&ent->flags, IMG_ENT_REPORTED, __ATOMIC_RELAXED) & IMG_ENT_REPORTED))
              LOG("[RED] fs %s failed the NCA's hash check when it was extracted (a damaged NSP, --allow-damaged); its bytes may be wrong", path);
          *out = FH_OUT(IMG_HANDLE(mi, k));
@@ -164,7 +163,7 @@ index a7e4c9c..458ac20 100644
          if (g_flag.fs) LOG("fs open [%.2fs] %s mode=%d → image entry %lld", (now_ns() - g_t0_ns) / 1e9, path, mode, (long long)k);
          return RES_OK;
      }
-@@ -751,6 +868,7 @@ HLE_FORCE("_ZN2nn2fs8OpenFileEPNS0_10FileHandleEPKci", "fsp-srv → open(2)", Re
+@@ -763,6 +880,7 @@ HLE_FORCE("_ZN2nn2fs8OpenFileEPNS0_10FileHandleEPKci", "fsp-srv → open(2)", Re
        atomic_store(&g_ftxn[fd], token); }
      fslog_init();
      if (g_fslog && fd < 4096) { pthread_mutex_lock(&g_fslog_lock); free(g_fdpath[fd]); g_fdpath[fd] = strdup(path); pthread_mutex_unlock(&g_fslog_lock); }
@@ -172,7 +171,7 @@ index a7e4c9c..458ac20 100644
      if (g_flag.fs) LOG("fs open [%.2fs] %s mode=%d → fd %d", (now_ns() - g_t0_ns) / 1e9, path, mode, fd);
      return RES_OK;
  }
-@@ -782,6 +900,7 @@ HLE_FORCE("_ZN2nn2fs8ReadFileEPmNS0_10FileHandleElPvm", "fsp-srv → pread(2)",
+@@ -794,6 +912,7 @@ HLE_FORCE("_ZN2nn2fs8ReadFileEPmNS0_10FileHandleElPvm", "fsp-srv → pread(2)",
          got += r;
      }
      *out = got;
@@ -180,7 +179,7 @@ index a7e4c9c..458ac20 100644
      if (g_fslog) { pthread_mutex_lock(&g_fslog_lock);
          static int hash_on = -1; if (hash_on < 0) hash_on = getenv("DM_FSLOG_HASH") != NULL;   // DM_FSLOG_HASH=1: append a column with the FNV-1a 64 of the content read (to compare whether the bytes read from two resource packs match)
          uint64_t fh = 0xcbf29ce484222325ull; if (hash_on) for (size_t i = 0; i < got; i++) fh = (fh ^ ((uint8_t *)buf)[i]) * 0x100000001b3ull;
-@@ -835,6 +954,7 @@ HLE_FORCE("_ZN2nn2fs11SetFileSizeENS0_10FileHandleEl", "fsp-srv → ftruncate(2)
+@@ -847,6 +966,7 @@ HLE_FORCE("_ZN2nn2fs11SetFileSizeENS0_10FileHandleEl", "fsp-srv → ftruncate(2)
  HLE_FORCE("_ZN2nn2fs9FlushFileENS0_10FileHandleE", "fsp-srv; host writes are already in the page cache, flushing is a no-op", Result, h_fs_FlushFile, uint64_t h) { dm_thread_service_request(); (void)h; return RES_OK; }
  HLE_FORCE("_ZN2nn2fs9CloseFileENS0_10FileHandleE", "fsp-srv → close(2)", void, h_fs_CloseFile, uint64_t h) { dm_thread_service_request(); h = FH_IN(h);
      if (!h || IMG_H(h)) return;   // the null handle after a failed open (see ReadFile): do not touch fd 0; an image entry holds no descriptor

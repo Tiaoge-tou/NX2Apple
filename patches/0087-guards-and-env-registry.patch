@@ -1,10 +1,10 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Tue, 3 Nov 2026 21:47:47 +0800
+Date: Wed, 4 Nov 2026 21:37:08 +0800
 Subject: [PATCH] Merge guards for the port series, and the env-switch registry
- rows filled in
+  rows filled in
 
-The regression net (patch port 0085, group R of the port inventory), adapted from the Tiaoge-tou/nxnative fork.
+The regression net (patch port 0087, group R of the port inventory), adapted from the Tiaoge-tou/nxnative fork.
 
 dm/tools/tests/test_merge_guards.py guards the port series' load-bearing pieces against a silent loss in an upstream sync: the Silksong fpslock row beside upstream's rows, the display-rate servo coexisting with the Frostbite tick (in this tree's guarded form), the settings table's skin and frame-rate rows, and the two games' profile keys. Adapted to this tree: the old fork's BC guards are dropped (BC here is the queue's own patch 0008, guarded by its own tests), the Dark Souls profile asserts are dropped (not this project's game), and the workflow guard waits for Phase 3's repository-level workflow.
 
@@ -13,7 +13,6 @@ docs/env_switches.tsv: the nine switches the port series reads (DM_PAD_SKIN, DM_
 Upstream-Status: fork-only
 Reason: Merge guards and env-switch registry for the port series (PROJECT.md Phase 2)
 Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
-
 ---
  dm/tools/tests/test_merge_guards.py | 55 +++++++++++++++++++++++++++++
  docs/env_switches.tsv               | 11 ++++++
@@ -82,10 +81,17 @@ index 0000000..e055ba4
 +if __name__ == '__main__':
 +    unittest.main()
 diff --git a/docs/env_switches.tsv b/docs/env_switches.tsv
-index e594a57..23625f5 100644
+index a31bda4..1f47004 100644
 --- a/docs/env_switches.tsv
 +++ b/docs/env_switches.tsv
-@@ -35,6 +35,7 @@ DM_ENV_FILE_KEYS	switch	Set by the iOS app and the Mac launcher at launch to the
+@@ -1,3 +1,6 @@
++DM_PAD_BAG	diagnostic	`0` keeps the touch pad out of the inventory (bag) layout of DmGamepad.m; on by default
++DM_PAD_HADES	diagnostic	`1` gives the touch pad Hades II's layout and art instead of Silksong's (DmGamepad.m); the build script sets it for a Hades II build
++DM_PAD_SKIN	diagnostic	`1` turns the touch pad's skin system on (DmGamepad.m); the host's pad watcher (hle_hid.c) runs only with it
+ name	class	meaning
+ DM_AB	diagnostic	`=<frames>` splits the run into phases of that many frames and alternates every switch set to `ab` (on in the odd phases); logs an `[ab]` line per phase with GPU and frame time and attachment traffic
+ DM_ALIAS_SIZE	diagnostic	`=<bytes>` gives the guest an alias region of that size instead of the profile's (at least 256 MB, whole host pages; the heap and stacks stay as they are): `0x1000000000`, the Switch's 64 GB, holds what a game reserves unchanged; the NSP script's address region check sets it (Mac only: an iPhone has no room)
+@@ -35,6 +38,7 @@ DM_ENV_FILE_KEYS	switch	Set by the iOS app and the Mac launcher at launch to the
  DM_ENV_LAUNCH_KEYS	switch	Set at launch by the Mac launcher (the launcher settings already in the environment) and the iOS app (every DM_* variable already in it) to the space-separated names; the settings screen keeps those values and shows them greyed out
  DM_FD_LOG	diagnostic	`=<seconds>` logs, every that many seconds, the number and kinds of file descriptors the process has open
  DM_FIXED_TIME	switch	`=<seconds>`: the user clock always returns that time and the host time zone is pinned to UTC, for deterministic comparison
@@ -93,7 +99,7 @@ index e594a57..23625f5 100644
  DM_FONT_DIR	path	Folder of the shared-font stand-ins (`standard.ttf`, `nintendo_ext.ttf` with the button icons); the app, the Mac launcher and the NSP script set it
  DM_FORCE_STRICT	diagnostic	`=1` makes the loader fail on forced-hook entries no module references, instead of only noting them (for checking a mistyped list)
  DM_FORK_PATCHES	path	the fork patches a build carries, comma separated (build_ipa.sh and build_shell.sh read dm/fork_patches.txt into it): `DMForkPatches` in the app's Info.plist and the first log line
-@@ -64,6 +65,7 @@ DM_GPU_CAPTURE	diagnostic	`=<frame>[:<frames>]` or `gpu:<ms>[:<after frame>]` wr
+@@ -64,6 +68,7 @@ DM_GPU_CAPTURE	diagnostic	`=<frame>[:<frames>]` or `gpu:<ms>[:<after frame>]` wr
  DM_GPU_CAPTURE_DIR	path	Folder for `DM_GPU_CAPTURE`'s traces (default `gpu_captures/` in the working directory)
  DM_GPU_CAPTURE_KEEP	diagnostic	Before each GPU capture, prunes the capture folder's `dm_*.gputrace` entries so that the newest `KEEP - 1` stay (default 2)
  DM_GUEST_SPAWN_TEST	diagnostic	`=1` runs a self-test before `nnMain`: a host-started guest thread does SDK malloc / free and locks an `nn::os` mutex, and the result is logged; `=2` also keeps a resident thread
@@ -101,19 +107,7 @@ index e594a57..23625f5 100644
  DM_HID_LOG	diagnostic	`1` logs the HID button usage number of each button pressed on a raw HID gamepad (`pad_hid_mac.h`), to write a `DM_HID_MAP`
  DM_HID_MAP	switch	`=<map>` such as `A=1,B=2,X=4,Y=5`: which HID button usage presses each Switch button on a raw HID gamepad (names A B X Y LS RS L R ZL ZR PLUS MINUS LEFT UP RIGHT DOWN; default 8BitDo's D-input numbering by position, `pad_hid.h`); Mac only
  DM_HID_PADS	switch	`0` stops reading raw HID gamepads that GameController does not list, such as an 8BitDo in its own mode (`pad_hid_mac.h`); Mac only
-@@ -208,8 +210,11 @@ DM_OODLE_JOB	path	`=<job file>`: the host runs the game's own Oodle decoder on e
- DM_OODLE_MODULES	path	The rewritten modules the Mac host's Oodle tool mode loads when `shader_split.py` decodes Trinity packs; set by the NSP script
- DM_OODLE_SERVE	switch	`=1`: the host answers decode requests on stdin / stdout with the game's own Oodle (or LZ5) decoder from the guest main thread before the SDK starts, until stdin ends
- DM_OPMODE	player	The operation mode the game sees: `0` handheld, `1` console (default: the profile's `op_mode`, console unless set); read once at startup
-+DM_PAD_BAG	diagnostic	`0` keeps the touch pad out of the inventory (bag) layout of DmGamepad.m; on by default
-+DM_PAD_HADES	diagnostic	`1` gives the touch pad Hades II's layout and art instead of Silksong's (DmGamepad.m); the build script sets it for a Hades II build
- DM_PAD_MAP	player	Mac controllers: `<name>=<name>,…` makes the button that sends the first by default send the second (or `none`), e.g. `A=B,B=A` swaps them (`input_map.h`)
- DM_PAD_MERGE	switch	`=1` merges every controller into player 1, as before, instead of giving each controller a player of its own (Mac and iOS)
-+DM_PAD_SKIN	diagnostic	`1` turns the touch pad's skin system on (DmGamepad.m); the host's pad watcher (hle_hid.c) runs only with it
- DM_PATCH_FRONT	switch	`=<bytes>`: the size of the patch area right before the module base for a long text (`BIG_TEXT`); set only by the rewriter's own rerun with the size it needs
- DM_PHONE_MOTION	switch	On iOS, whether the phone's own device motion drives player 1's six-axis sensor: `auto` (default) while no controller supplies fresh motion, `1` phone only, `0` never; each source keeps its own orientation
- DM_PREEMPT	switch	`0` / `1` overrides the profile's `core_preempt`: also check already-runnable higher-priority peers on the caller's core after every thread SVC
-@@ -257,7 +262,10 @@ DM_QOS_EDGES	switch	`=e1,e2`: the Switch priority edges of `DM_QOS_MAP` (default
+@@ -263,7 +268,10 @@ DM_QOS_EDGES	switch	`=e1,e2`: the Switch priority edges of `DM_QOS_MAP` (default
  DM_QOS_MAP	switch	`=1` maps guest thread priority to QoS class: ≤ 44 user-interactive, 45–59 user-initiated, the rest utility (off by default: every guest thread runs user-interactive)
  DM_REC	diagnostic	`=<file>`: writes player 1's physical input (keyboard, mouse touches, controllers; never `DM_KEYS` / `DM_CTL`) to the file as `DM_KEYS` steps in presented frames, for replaying a run (`DM_KEYS=@<file>`)
  DM_REGIONS	diagnostic	`=<file>` writes the table of the SDK's address regions every 2 s (alias offset, size, where the request returns to in the game, bytes mapped, the part opened, the SDK offset the request came through; `hle_svc.c` "Address regions"); the NSP script's address region check sets it
@@ -124,7 +118,7 @@ index e594a57..23625f5 100644
  DM_RESOURCE_AOC	path	The add-on content folder the iOS build copies into the app's `aoc/` (empty for none); written by `gen_resources.py`, read by `stage_resources.sh`
  DM_RESOURCE_BUILD	switch	Package version (for example `v327680`), written to `Gen/resources.env` by `gen_resources.py`; with `DM_COPY_ROMFS=NO` the copy phase puts it in the `build=` field of the app's `romfs.id`
  DM_RESOURCE_CHAIN_H	path	Path of `dm/gfx/nvn/dmsh_chain.h`, written to `Gen/resources.env` by `build_ipa.sh`; the Xcode copy phase (`stage_resources.sh`) stops when the prepared shaders are not of its chain version
-@@ -285,15 +293,18 @@ DM_SAVE_SYNC	player	Cloud saves: the folder whose `<title ID>/save.dmsync` the s
+@@ -291,15 +299,18 @@ DM_SAVE_SYNC	player	Cloud saves: the folder whose `<title ID>/save.dmsync` the s
  DM_SCHEME_NAME	switch	Set by `build_ipa.sh` itself for xcodegen's `project.yml`: the Xcode scheme name, `DmIOS`, or `<display name> (<title ID>)` for a project prepared with `--prepare-xcode`
  DM_SCREEN	player	`=<number>` opens the Mac window on the connected screen with that `NSScreenNumber` (`CGDirectDisplayID`), centred, before any `DM_FULLSCREEN` request; an unknown number is logged and ignored. The NX2Apple launcher sets it to its own window's screen
  DM_SCREEN_MATCH	switch	`0` keeps the screen's refresh rate in fullscreen; by default a Mac screen whose rate is not a multiple of the game's frame rate switches to one that is (144 → 120 Hz)

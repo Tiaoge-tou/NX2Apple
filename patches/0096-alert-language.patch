@@ -1,22 +1,21 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Wed, 4 Nov 2026 13:12:44 +0800
-Subject: [PATCH] The back-to-library alert follows the preferred language and
+Date: Wed, 4 Nov 2026 23:13:01 +0800
+Subject: [PATCH] The back-to-library alert follows the preferred language and 
  says what happens
 
 Upstream-Status: fork-only
 Reason: The shell is localised for its player, so the one game-side alert follows the preferred language (Chinese when preferred, English otherwise), and its text says plainly that the app closes and reopening it returns to the library
 Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 4
-
 ---
  dm/ios/Sources/front_ios.m | 9 ++++++---
  1 file changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/dm/ios/Sources/front_ios.m b/dm/ios/Sources/front_ios.m
-index ad02f10..5a5f70c 100644
+index 32cf9d1..8acbad2 100644
 --- a/dm/ios/Sources/front_ios.m
 +++ b/dm/ios/Sources/front_ios.m
-@@ -245,9 +245,12 @@ static void front_ios_hud_script_fix(int width) {
+@@ -323,9 +323,12 @@ static void front_ios_hud_script_fix(int width) {
  - (void)dm_back_to_library:(UILongPressGestureRecognizer *)press {
      if (press.state != UIGestureRecognizerStateBegan) return;   // once per press, not for every change it reports
      if (self.presentedViewController) return;   // an alert is already up (a boot message, or this one from a second press)
@@ -31,4 +30,4 @@ index ad02f10..5a5f70c 100644
 +    [a addAction:[UIAlertAction actionWithTitle:zh ? @"关闭游戏" : @"Close game" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) { exit(0); }]];   // the shell opens on its library, so closing the app is the way back to it
      [self presentViewController:a animated:YES completion:nil];
  }
- - (void)viewDidAppear:(BOOL)a {
+ - (void)showFPS:(BOOL)on {   // the frame-rate counter: DM_SHOW_FPS at Play, then the in-game menu

@@ -1,21 +1,20 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Tue, 3 Nov 2026 21:23:00 +0800
-Subject: [PATCH] Resolution, guest side: the two games' render-size cuts,
+Date: Wed, 4 Nov 2026 20:12:28 +0800
+Subject: [PATCH] Resolution, guest side: the two games' render-size cuts, 
  HOST_FILLS in the rewriter, and their serve_patch rows
 
-The guest half of the resolution service (patch port 0076, group N of the port inventory), carried from the Tiaoge-tou/nxnative fork. It pairs with the host half in patch 0075.
+The guest half of the resolution service (patch port 0078, group N of the port inventory), carried from the Tiaoge-tou/nxnative fork. It pairs with the host half in patch 0077.
 
 New patches.py for both games (neither profile had one in this tree): Silksong's render-width and display-state cuts with its HOST_FILLS display-mode template and resolution record, and Hades II's render-size stub, which reads the packed size from the frame-step state page (+0x38) the host writes. The Silksong GUI reference width is deliberately not cut, as the file itself records.
 
-dm/tools/patch_nso.py learns HOST_FILLS (the fixups rows the loader fills, patch 0075), the state page's render-size cell in its layout comment, and the FAR state page reservation rework the Hades II stub relies on. dm/tools/nso_asm.py gains the 32-bit LDRW.
+dm/tools/patch_nso.py learns HOST_FILLS (the fixups rows the loader fills, patch 0077), the state page's render-size cell in its layout comment, and the FAR state page reservation rework the Hades II stub relies on. dm/tools/nso_asm.py gains the 32-bit LDRW.
 
-Both profiles' serve_patch rows land here (the mechanism is patch 0073, the key is patch 0072): Silksong's boot-scene bundle slots and Hades II's baked RunLogic literals, served per device instead of frozen to one phone's frame.
+Both profiles' serve_patch rows land here (the mechanism is patch 0075, the key is patch 0074): Silksong's boot-scene bundle slots and Hades II's baked RunLogic literals, served per device instead of frozen to one phone's frame.
 
 Upstream-Status: fork-only
 Reason: Silksong and Hades II guest-side render-size cuts and their serve_patch rows (PROJECT.md Phase 2)
 Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
-
 ---
  dm/games/010013C00E930000/game.tsv   |  18 +++
  dm/games/010013C00E930000/patches.py | 189 +++++++++++++++++++++++++++
@@ -327,7 +326,7 @@ index db941fc..d08932d 100644
  def MRS_TPIDRRO(t): return 0xD53BD060 | t
  def ADRP(dd, pc, target):
 diff --git a/dm/tools/patch_nso.py b/dm/tools/patch_nso.py
-index cbae949..4740191 100644
+index d0b76f8..b69d213 100644
 --- a/dm/tools/patch_nso.py
 +++ b/dm/tools/patch_nso.py
 @@ -74,6 +74,7 @@ else:
@@ -347,7 +346,7 @@ index cbae949..4740191 100644
      for n, path in enumerate(PATCH_FILES):
          spec = importlib.util.spec_from_file_location(f'patches_{n}', path); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
          for kind, table in tables.items():
-@@ -1357,10 +1358,12 @@ obs += region_obs
+@@ -1364,10 +1365,12 @@ obs += region_obs
  # nvn_fstep.h): the step is the number of vsyncs the host keeps the frame on screen (1 = 60 fps, 2 = 30 when 60 does not hold), plus one while the game is behind real time after
  # a late frame, so motion is even and game time = real time. The steps stay values the games' own logic uses (1 to 3). Age of Calamity's updates are not held by the presents:
  # its stubs run them at the cap, and the host only paces its presents (its patches.py).
@@ -362,7 +361,7 @@ index cbae949..4740191 100644
  # A build's stubs are FRAME_STEP[build ID](ctx) in its patches.py: ctx.here() / ctx.emit(word) assemble into the patch area, ctx.site(offset, original bytes) asserts a site and that it is
  # no rewrite site, ctx.put(offset, words, reason) writes it (listed with the cuts), ctx.state is the state page's offset, and ctx.render_scale = 1 marks a render-scale stub
  FRAME_STEP = PATCHES['FRAME_STEP']
-@@ -1369,10 +1372,16 @@ RENDER_SCALE = 0   # 1 = the build has a render-scale stub (state +0x10): the fi
+@@ -1376,10 +1379,16 @@ RENDER_SCALE = 0   # 1 = the build has a render-scale stub (state +0x10): the fi
  if BUILD_ID in FRAME_STEP and NAME == 'main':
      FS_STATE_OFF = KEY_PAGE_OFF + 0x4000
      if FAR:
@@ -382,11 +381,11 @@ index cbae949..4740191 100644
      def fs_site(off, orig):
          ob = bytes.fromhex(orig)
          assert IMG[off:off + len(ob)] == ob, f'frame step original bytes mismatch {off:#x}: {bytes(IMG[off:off + len(ob)]).hex()}'
-@@ -1714,6 +1723,7 @@ with open(P('fixups.tsv'), 'w') as f:
+@@ -1721,6 +1730,7 @@ with open(P('fixups.tsv'), 'w') as f:
      if TWO: f.write(f'# BACK_OFF\t{BACK_OFF:#x}\n# BACK_LEN\t{BACK_LEN:#x}\n')   # the back patch area (TWO): its offset in the image, and its length, the last bytes of the file
      for k in KEY_INDEX: f.write(f'# KEY_{k}_IDX\t{KEY_INDEX[k]}\n')
      if FS_STATE_OFF: f.write(f'# FPS_STATE_OFF\t{FS_STATE_OFF:#x}\n')   # frame step state page (FRAME_STEP): the loader writes the target fps there
 +    for which, off in PATCHES['HOST_FILLS'].get(BUILD_ID, []): f.write(f'# HOST_FILL_{which}\t{off:#x}\n')   # display-mode size word the loader fills with the screen's width for that mode when the game starts (HOST_FILLS)
      if UE_CALL is not None: f.write(f'# UE_MALLOC_VT\t{UE_VT:#x}\n# UE_MALLOC_SLOT\t{UE_SLOT:#x}\n')   # Unreal's FMallocBinned3 (ue_malloc.py): its vtable and the slot of its name getter, which names the slot layout
+     if FPS_TARGET_PTR is not None: f.write(f'# FPS_TARGET_PTR\t{FPS_TARGET_PTR:#x}\n# FPS_TARGET_FIELD\t{FPS_TARGET_FIELD:#x}\n')   # a target frame rate the game steps by (fps_target.py)
      for n, o in UE_CVARS.items(): f.write(f'# UE_CVAR:{n}\t{o:#x}\n')   # Unreal console variables (ue_cvar.py): the TAutoConsoleVariable registered under each name
-     if RENDER_SCALE: f.write('# RENDER_SCALE\t1\n')   # a render-scale stub reads state +0x10 (the loader ignores the key; dm/games/settings.py offers the setting by it)

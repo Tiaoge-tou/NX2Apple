@@ -1,10 +1,10 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Tue, 3 Nov 2026 21:20:20 +0800
-Subject: [PATCH] Resolution, host side: measured render size in the state
+Date: Wed, 4 Nov 2026 20:03:44 +0800
+Subject: [PATCH] Resolution, host side: measured render size in the state 
  page, host-filled mode sizes, nn::oe default resolution
 
-The host half of the resolution service (patch port 0075, group M of the port inventory), carried from the Tiaoge-tou/nxnative fork.
+The host half of the resolution service (patch port 0077, group M of the port inventory), carried from the Tiaoge-tou/nxnative fork.
 
 loader.c: dm_fps_state_apply writes the measured render size into the frame-step state page (the docked pair at +0x38 from DM_RENDER_WIDTH, the handheld pair at +0x40 from DM_RENDER_WIDTH_HD, with the narrow-screen stock-frame rules and the serve_narrow exception for a guest with a resolution record, published as DM_SERVE_NARROW for nn::oe), and fills a guest's display-mode size words from the screen (fixups HOST_FILL_D / HOST_FILL_H / HOST_FILL_W, parsed in read_layout, the fields in dm.h). The state page range check grows to +0x48 for the handheld cell.
 
@@ -12,19 +12,18 @@ hle_oe.c: the default display resolution answer follows the same sizes: the host
 
 dm.h also declares dm_display_hz / dm_display_set_hz here: the definition and its callers land in the 120 Hz patch, and nothing calls them yet.
 
-dm/tools/docs_patches.py classifies the four profile keys patch 0072 added (display_wide, pad_skin_toggle, serve_patch, display_hz) in SWITCH_BINDING: the generated game-patches doc refuses an unclassified key, and this patch is the first to have a profile use one.
+dm/tools/docs_patches.py classifies the four profile keys patch 0074 added (display_wide, pad_skin_toggle, serve_patch, display_hz) in SWITCH_BINDING: the generated game-patches doc refuses an unclassified key, and this patch is the first to have a profile use one.
 
 Upstream-Status: fork-only
 Reason: Measured render sizes served to Silksong and Hades II on every size channel (PROJECT.md Phase 2)
 Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
-
 ---
  dm/games/0100A00019DE0000/game.tsv |   4 ++
  dm/host/dm.h                       |   8 +++
- dm/host/hle_oe.c                   |  33 ++++++++-
+ dm/host/hle_oe.c                   |  34 ++++++++-
  dm/host/loader.c                   | 112 ++++++++++++++++++++++++++++-
  dm/tools/docs_patches.py           |   8 +++
- 5 files changed, 162 insertions(+), 3 deletions(-)
+ 5 files changed, 162 insertions(+), 4 deletions(-)
 
 diff --git a/dm/games/0100A00019DE0000/game.tsv b/dm/games/0100A00019DE0000/game.tsv
 index b0e47b7..03c6849 100644
@@ -42,19 +41,19 @@ index b0e47b7..03c6849 100644
  # The NPDM declares no system resource (META +0x14 = 0): the game uses SetHeapSize. It asks for 3.10 GB (pool − used memory), which the 3.25 GB heap region of
  # the 4 GB layout holds. main carries an 82 MB bss: the rewritten modules take more than the default 64 MB of used memory, so SetHeapSize(pool − 64 MB) would not fit
 diff --git a/dm/host/dm.h b/dm/host/dm.h
-index 402a3aa..c393b29 100644
+index 1fac8a6..00d1de8 100644
 --- a/dm/host/dm.h
 +++ b/dm/host/dm.h
-@@ -55,6 +55,8 @@ typedef struct {
-     struct { char name[32]; uint64_t off; } ue_cvar[8];   // Unreal console variables found by their registered names (patch_nso.py, ue_cvar.py; UE_CVAR:<name>): each one's TAutoConsoleVariable
-     int n_ue_cvar;
+@@ -57,6 +57,8 @@ typedef struct {
+     uint64_t fps_target_ptr;   // a target frame rate the game steps by, an int32 at [main + fps_target_ptr] + fps_target_field (patch_nso.py, fps_target.py; hle_fpslock.c); 0 = none
+     uint32_t fps_target_field;
      uint64_t fps_state_off;    // frame step state page (patch_nso.py FRAME_STEP: Tears of the Kingdom 1.4.3 and Breath of the Wild 1.9.0 main); 0 = none
 +    uint64_t fill_d_off, fill_h_off;   // display-mode size words (docked / handheld) the loader fills with the screen's widths when the game starts (patch_nso.py HOST_FILLS); 0 = none
 +    uint64_t fill_w_off;       // a resolution record (four words: a world size at a 576-line reference, then the handheld size) whose world word the loader widens to the screen's aspect on a screen wider than the stock frame (patch_nso.py HOST_FILLS 'W'); 0 = none
      int64_t patch_off;         // patch area relative to the base; negative = before the base (image too large, see patch_nso.py FAR), and size does not include it
      uint64_t image_size, file_image_len, patch_len;   // only with the patch area before the base: whole image (with bss and key page), length of the image part of the file, patch area length
      uint64_t back_off, back_len;   // a second patch area after the image (patch_nso.py TWO: a text longer than a B reaches), inside size; 0 = none
-@@ -192,6 +194,12 @@ const char *dm_cheats_source(int i);
+@@ -194,6 +196,12 @@ const char *dm_cheats_source(int i);
  void dm_cheats_exit(void);            // a clean exit (hle_lifecycle.c, atexit): removes the safe-mode flag
  // Graphics lifecycle (hle_nvn.c): on=1 suspends (afterwards submit / present block, and in-flight GPU work is drained before returning), on=0 resumes; called by the iOS front end when entering and leaving the background
  void dm_gfx_suspend(int on);
@@ -68,15 +67,16 @@ index 402a3aa..c393b29 100644
  void dm_gfx_shot_at(long k, const char *path);
  void dm_shot_written(const char *path, int ok);   // The graphics side finished writing a screenshot to disk (diag.c: DM_TICK_HOLD=E:SHOT unfreezes on this)
 diff --git a/dm/host/hle_oe.c b/dm/host/hle_oe.c
-index 1e97a64..ed34d6a 100644
+index 1b70f37..2237f35 100644
 --- a/dm/host/hle_oe.c
 +++ b/dm/host/hle_oe.c
-@@ -155,8 +155,37 @@ HLE_FORCE("_ZN2nn2oe22SetCpuOverclockEnabledEb", "CPU overclock switch (through
- HLE_FORCE("_ZN2nn2oe23GetCurrentGraphicsScaleEv", "graphics scale (Switch 2, through am): 0 handheld, 1 console", int, h_oe_GfxScale, void) { return opmode() == 1; }
- HLE_FORCE("_ZN2nn2oe42SetGraphicsScaleChangedNotificationEnabledEb", "graphics scale change notification (Switch 2, through am); the scale changes only with the operation mode",
-           void, h_oe_GfxScaleNotify, unsigned on) { (void)on; }
+@@ -162,9 +162,37 @@ HLE_FORCE("_ZN2nn2gs3sdk26SetGraphicsFrameLengthModeENS1_23GraphicsFrameLengthMo
+           void, h_gs_FrameLength, int mode) {
+     static int last = -1; if (mode != last) { LOG("gs: graphics frame length mode %d (0 auto, 1 30 fps, 2 60 fps, 3 120 fps)", mode); last = mode; }
+ }
 -HLE_FORCE("_ZN2nn2oe27GetDefaultDisplayResolutionEPiS1_", "default display resolution: 1920x1080 docked, 1280x720 handheld", void, h_oe_DefRes, int *w, int *h) {
 -    int con = opmode() == 1; if (w) *w = con ? 1920 : 1280; if (h) *h = con ? 1080 : 720;
+-}
 +HLE_FORCE("_ZN2nn2oe27GetDefaultDisplayResolutionEPiS1_", "default display resolution: 1920x1080 docked, the host's handheld size at 720p handheld (profile display_wide + fullscreen: the host's render size)", void, h_oe_DefRes, int *w, int *h) {
 +    int con = opmode() == 1; int x = con ? 1920 : 1280, y = con ? 1080 : 720;
 +    // Profile display_wide (Hades II): with the fullscreen setting on, report the host's render width
@@ -108,11 +108,11 @@ index 1e97a64..ed34d6a 100644
 +        if (hw >= 320 && hw <= 16384 && !(hw % 8) && (hw > 1280 || getenv("DM_SERVE_NARROW"))) x = (int)hw; }
 +    if (w) *w = x; if (h) *h = y;
 +    static int ncalls; if (ncalls < 16) LOG("default display resolution: %dx%d (call %d)", x, y, ncalls); ncalls++;   // diagnostic: every early answer, not just the first
- }
  HLE_FORCE("_ZN2nn2oe38GetDefaultDisplayResolutionChangeEventEPNS_2os11SystemEventE", "default display resolution change event: bound, never signaled (the operation mode notification carries the change)",
            void, h_oe_DefResEv, void *ev) { hle_bind_system_event(ev, 0); }
+ HLE_FORCE("_ZN2nn2oe40SendServerMaintenanceOverlayNotificationENS_4time9PosixTimeES2_", "server maintenance overlay (through am); the host has no system overlay", void, h_oe_MaintOverlay, int64_t a, int64_t b) { (void)a; (void)b; }
 diff --git a/dm/host/loader.c b/dm/host/loader.c
-index 2cc2900..b236f6d 100644
+index dc44b26..5b60cd8 100644
 --- a/dm/host/loader.c
 +++ b/dm/host/loader.c
 @@ -240,6 +240,7 @@ static void force_check(void) {
@@ -132,8 +132,8 @@ index 2cc2900..b236f6d 100644
 +        else if (!strcmp(key, "HOST_FILL_W")) { m->fill_w_off = v; g_fill_mod = m; }
          else if (!strcmp(key, "UE_MALLOC_VT")) m->ue_malloc_vt = v;
          else if (!strcmp(key, "UE_MALLOC_SLOT")) m->ue_malloc_slot = (unsigned)v;
-         else if (!strncmp(key, "UE_CVAR:", 8)) {
-@@ -290,7 +294,7 @@ static void read_layout(module_t *m, const char *dir) {
+         else if (!strcmp(key, "FPS_TARGET_PTR")) m->fps_target_ptr = v;
+@@ -292,7 +296,7 @@ static void read_layout(module_t *m, const char *dir) {
  uint8_t *dm_fps_state;
  static const char *g_fps_mod;   // the module holding the state page (for the log)
  static void install_fps_state(module_t *m) {
@@ -142,7 +142,7 @@ index 2cc2900..b236f6d 100644
      dm_fps_state = m->base + m->fps_state_off; g_fps_mod = m->name;
  }
  // The settings in the state page, written when the game starts (main.c, after host loading): on iOS the loading runs at app launch, before the launcher has set DM_FPS_TARGET and
-@@ -305,6 +309,112 @@ void dm_fps_state_apply(void) {
+@@ -307,6 +311,112 @@ void dm_fps_state_apply(void) {
      const char *rs = getenv("DM_RENDER_SCALE"); float sc = 1.0f;
      if (rs) { char *end; sc = strtof(rs, &end); if (end == rs || *end || !(sc >= 0.5f && sc <= 1.0f)) { LOG("[RED] DM_RENDER_SCALE=%s: must be 0.5 to 1.0; keeping the game's size", rs); sc = 1.0f; } else LOG("%s: 3D views rendered at %.2f of the game's size (DM_RENDER_SCALE)", g_fps_mod, sc); }
      memcpy(dm_fps_state + 0x10, &sc, sizeof sc);
