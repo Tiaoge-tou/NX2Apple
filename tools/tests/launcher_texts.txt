@@ -1,14 +1,10 @@
-120 Hz
-120 Hz needs a screen that supports it and falls back to 60 Hz on one that does not. Sustained heavy load may throttle with heat, so use it with care.
+16:9 (Switch)
 30 fps
-60 Hz
 60 fps
 Adjusts resolution between 70% and 100% under load. Turn off to keep full resolution for the selected console mode.
 American English
-Black iron
 Brazilian Portuguese
 British English
-Button skin
 Canadian French
 Console mode
 Controls
@@ -31,9 +27,6 @@ Game rumble
 Game's own
 Game's upscaler
 German
-Glass
-Glass is the glass keys, Moon is the picture skin, and Moon (badges) is the picture skin with letter badges.
-Glass is the glass keys, Thorn is the picture skin, Thorn (badges) is the picture skin with letter badges, and Black iron is the picture skin in black-iron rings.
 Handheld
 Hold frames when late
 Italian
@@ -43,15 +36,14 @@ Korean
 Latin American Spanish
 Metal 4 pipelines
 MetalFX
-Moon
-Moon (badges)
 Performance
 Performance HUD
 Picture
+Picture shape
 Pipeline prebuild
 Portuguese
-Refresh rate
 Render scale
+Renders about a quarter more pixels: a little slower and warmer.
 Rumble cutoff
 Rumble strength
 Russian
@@ -59,11 +51,10 @@ Simplified Chinese
 Spanish
 Standard
 The first start waits a few minutes for it, once.
-Thorn
-Thorn (badges)
 Touch feedback
 Traditional Chinese
 Up to one frame more display latency.
 Upscaling
 Uses more GPU time and can increase heat.
 Window
+iPhone Duo screen (1.43:1)
