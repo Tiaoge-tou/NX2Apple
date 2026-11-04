@@ -64,3 +64,4 @@
 0096-pad-sync-code.patch
 0097-pad-sync-art.patch
 0098-probe-return-to-the-shell-library-in-process.patch
+0099-loader-a-fresh-module-registry-starts-with-zeroe.patch
