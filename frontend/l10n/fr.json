@@ -1073,7 +1073,6 @@
   "msg.bcOn": "Mode anciens appareils : les textures BC seront décodées sur le CPU",
   "msg.buildFailed": "Échec de la compilation (code de sortie %d) — voir le journal ci-dessous",
   "msg.buildFailedReason": "Échec de la compilation — voir le journal ci-dessous. Dernière ligne : %@",
-  "msg.chainChanged": null,
   "msg.done": "Terminé",
   "msg.exitCode": "code de sortie %d",
   "msg.installingNsz": "Le dump sélectionné est en NSZ / XCZ — installation de nsz dans le Python de compilation…",

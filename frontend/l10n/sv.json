@@ -913,7 +913,6 @@
   "msg.bcOn": "Läget för äldre enheter: BC-texturer avkodas på processorn",
   "msg.buildFailed": "Bygget misslyckades med slutkod %d. Se loggen nedan.",
   "msg.buildFailedReason": "Bygget misslyckades. Se loggen nedan. Sista raden: %@",
-  "msg.chainChanged": null,
   "msg.done": "Klart",
   "msg.exitCode": "slutkod %d",
   "msg.installingNsz": "Det valda filformatet är komprimerat NSZ/XCZ. Installerar nsz i Python-miljön som används för bygget …",

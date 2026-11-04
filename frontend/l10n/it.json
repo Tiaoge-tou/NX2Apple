@@ -1073,7 +1073,6 @@
   "msg.bcOn": "Modalità per dispositivi meno recenti: le texture BC verranno decodificate sulla CPU",
   "msg.buildFailed": "Build non riuscita (codice di uscita %d): vedi il log qui sotto",
   "msg.buildFailedReason": "Build non riuscita: vedi il log qui sotto. Ultima riga: %@",
-  "msg.chainChanged": null,
   "msg.done": "Fatto",
   "msg.exitCode": "codice di uscita %d",
   "msg.installingNsz": "Il dump selezionato è NSZ / XCZ: installazione di nsz nel Python della build…",

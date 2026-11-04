@@ -1073,7 +1073,6 @@
   "msg.bcOn": "兼容老设备：BC 纹理将在 CPU 上解压",
   "msg.buildFailed": "构建失败（退出码 %d），见下方日志",
   "msg.buildFailedReason": "构建失败，见下方日志。最后一行：%@",
-  "msg.chainChanged": null,
   "msg.done": "完成",
   "msg.exitCode": "退出码 %d",
   "msg.installingNsz": "选中的是 NSZ / XCZ 压缩格式，正在给构建用的 Python 安装 nsz…",

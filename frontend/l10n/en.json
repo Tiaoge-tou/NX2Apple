@@ -1072,7 +1072,6 @@
   "msg.bcOn": "Older-device mode: BC textures will be decoded on the CPU",
   "msg.buildFailed": "Build failed (exit code %d) — see the log below",
   "msg.buildFailedReason": "Build failed — see the log below. Last line: %@",
-  "msg.chainChanged": null,
   "msg.done": "Done",
   "msg.exitCode": "exit code %d",
   "msg.installingNsz": "The selected dump is NSZ / XCZ — installing nsz into the build's Python…",
