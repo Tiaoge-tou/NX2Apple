@@ -54,6 +54,7 @@ public struct EngineLaunchPlan: Equatable, Sendable {
         env["DM_LAUNCHER"] = "0"
         // A shell launched this game: the game view shows its way back to the library only for a shell start.
         env["DM_SHELL"] = "1"
+        env["DM_PROBE_RETURN"] = "1"   // probe branch only: the three-finger close tries to return to the library in-process instead of quitting the app; never set on main
         for (key, value) in game.environment { env[key] = value }
 
         var fromFile: [String] = []

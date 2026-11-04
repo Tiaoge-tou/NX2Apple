@@ -1,0 +1,260 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 18:06:07 +0800
+Subject: [PATCH] Probe: return to the shell library in-process
+ (DM_PROBE_RETURN)
+
+Upstream-Status: fork-only
+Reason: Probe build only: the three-finger close freezes the guest, runs the ordered teardown without its exit, and hands the window back to a fresh library with every start guard re-armed, so a second game can start in the same process. Never on main; the probe measures what the abandoned threads and mappings break.
+Issue: Tiaoge-tou/NX2Apple PROJECT.md probe: in-process return to library
+
+---
+ dm/host/dm.h               |  3 +++
+ dm/host/front.h            |  1 +
+ dm/host/hle_lifecycle.c    | 16 ++++++++++++----
+ dm/host/hle_profile.c      |  2 ++
+ dm/host/hle_profile.h      |  1 +
+ dm/host/hle_thread.c       | 13 +++++++++++++
+ dm/host/main.c             |  2 ++
+ dm/ios/Shell/ShellMain.m   | 32 +++++++++++++++++++++++++++++---
+ dm/ios/Sources/front_ios.m | 14 ++++++++++++--
+ dm/ios/Sources/main.m      |  1 +
+ 10 files changed, 76 insertions(+), 9 deletions(-)
+
+diff --git a/dm/host/dm.h b/dm/host/dm.h
+index c393b29..b22646d 100644
+--- a/dm/host/dm.h
++++ b/dm/host/dm.h
+@@ -204,3 +204,6 @@ void dm_gfx_enter(void); void dm_gfx_leave(void);   // hle_nvn.c: the gate dm_gf
+ void dm_gfx_shot_at(long k, const char *path);
+ void dm_shot_written(const char *path, int ok);   // The graphics side finished writing a screenshot to disk (diag.c: DM_TICK_HOLD=E:SHOT unfreezes on this)
+ void dm_host_shutdown(const char *why);   // Graceful exit (crash.c): stop background threads and audio, drain graphics, then _exit(0); used by SIGTERM and the iOS App termination callback   // graphics side: screenshot of the k-th frame after the current presented frame (nvn_mtl.m)
++void dm_host_shutdown_return(const char *why);   // Probe (DM_PROBE_RETURN): the same ordered teardown without the _exit, for an in-process return to the shell library; the caller froze the guest threads first
++void dm_host_shutdown_reset(void);   // Probe: re-arm the teardown's once guard for the next game started in this process
++void dm_guest_freeze_all(void);   // Probe (hle_thread.c): suspend every guest thread's mach port and never resume it; the threads are abandoned where they stand, with their stacks and any host locks they hold
+diff --git a/dm/host/front.h b/dm/host/front.h
+index dfedfb5..958d9fc 100644
+--- a/dm/host/front.h
++++ b/dm/host/front.h
+@@ -38,6 +38,7 @@ int front_text_input(const char *title, const char *sub, const char *guide, cons
+ // Early start of host loading (main.c): reading the NSO / relocation / forced takeover / prefetch start are moved to a background thread, in parallel with the front end (UIKit launch chain, Metal view);
+ // the dm_main / main called afterwards waits for it to finish. For call timing and preconditions see the comments in main.c (set DM_ROMFS and the other environment variables and the cwd first; arguments identical item by item to those of the later main).
+ void dm_host_preload_start(int argc, char **argv);
++void dm_host_preload_reset(void);   // Probe: clear the early-start guard, so a second game started in the same process preloads again
+ // iOS: names the loaded image that carries the game's embedded module sections (loader.c map_image, nro_pieces), for an app that links them into a framework it dlopens from its signed bundle.
+ // Set it before dm_host_preload_start, once: the loader reads it on the preload thread and at every later NRO load. Not set, they are read from the executable
+ void dm_set_game_image_header(const void *mh);
+diff --git a/dm/host/hle_lifecycle.c b/dm/host/hle_lifecycle.c
+index e027970..8dcf21e 100644
+--- a/dm/host/hle_lifecycle.c
++++ b/dm/host/hle_lifecycle.c
+@@ -7,10 +7,11 @@
+ #include <signal.h>
+ #include <unistd.h>
+ void hlecount_flush(void); void dm_rec_finish(void);
+-void dm_host_shutdown(const char *why) {
+-    static _Atomic int once; if (atomic_exchange(&once, 1)) return;
++static _Atomic int shutdown_once;
++static void shutdown_impl(const char *why, int exit_after) {
++    if (atomic_exchange(&shutdown_once, 1)) return;
+     uint64_t t0 = now_ns(); LOG("received %s: graceful exit", why);
+-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1500 * NSEC_PER_MSEC), dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
++    if (exit_after) dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1500 * NSEC_PER_MSEC), dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0), ^{
+         LOG("[RED] graceful exit not done in 1.5 seconds, exiting at once"); _exit(0); });
+     hlecount_flush();                               // DM_HLECOUNT: _exit does not run atexit, write a copy here
+     dm_rec_finish();                                // DM_REC: the held state and the buffered steps (hle_hid.c)
+@@ -18,8 +19,15 @@ void dm_host_shutdown(const char *why) {
+     dm_audio_suspend(1);
+     dm_gfx_suspend(1);
+     LOG("graceful exit done (%.3f s)", (now_ns() - t0) / 1e9);
+-    _exit(0);
++    if (exit_after) _exit(0);
++    else LOG("probe: teardown done, the process stays alive (no exit)");
+ }
++void dm_host_shutdown(const char *why) { shutdown_impl(why, 1); }
++// Probe (DM_PROBE_RETURN): the teardown above without the exit and without the watchdog that forces
++// one, for the shell's in-process return to the library. The guest threads are already frozen, so a
++// graphics drain that cannot finish simply stays unfinished; nothing here may end the process.
++void dm_host_shutdown_return(const char *why) { shutdown_impl(why, 0); }
++void dm_host_shutdown_reset(void) { atomic_store(&shutdown_once, 0); }
+ void dm_term_install(void) {
+     signal(SIGTERM, SIG_IGN);                       // do not take the default action: hand over to the GCD signal source to wrap up on an ordinary thread
+     static dispatch_source_t src;
+diff --git a/dm/host/hle_profile.c b/dm/host/hle_profile.c
+index 0ce0861..1972dda 100644
+--- a/dm/host/hle_profile.c
++++ b/dm/host/hle_profile.c
+@@ -296,6 +296,8 @@ const struct dm_profile *dm_profile(void) {
+     return &P;
+ }
+ 
++void dm_profile_reload(void) { g_loaded = 0; }   // Probe: the next dm_profile() loads again, from the DM_PROFILE the next game's launch plan set
++
+ void dm_profile_log(void) {
+     const struct dm_profile *p = dm_profile();
+     LOG("game profile: %s (%s) from %s", p->id, p->name, p->source);
+diff --git a/dm/host/hle_profile.h b/dm/host/hle_profile.h
+index 588519d..5acb192 100644
+--- a/dm/host/hle_profile.h
++++ b/dm/host/hle_profile.h
+@@ -39,6 +39,7 @@ struct dm_profile {
+ };
+ 
+ const struct dm_profile *dm_profile(void);   // loaded once; never NULL
++void dm_profile_reload(void);   // Probe: forget the loaded profile; the next dm_profile() loads again from DM_PROFILE (a second game in the same process brings its own)
+ void dm_profile_log(void);
+ // The same pointer, cached per translation unit: for the hot paths (per draw, per texture) that cannot afford the function call.
+ // dm_profile() is first called from main() before any thread starts, so the cache never sees a half-loaded profile.
+diff --git a/dm/host/hle_thread.c b/dm/host/hle_thread.c
+index d623db4..f7b1fd8 100644
+--- a/dm/host/hle_thread.c
++++ b/dm/host/hle_thread.c
+@@ -338,6 +338,19 @@ static void *thread_main(void *p) {
+     dm_thread_enter(t->entry, t->arg, t->stack_top);   // Does not return: the guest must exit through ExitThread
+     die("guest thread entry returned");
+ }
++// Probe (DM_PROBE_RETURN): freeze the whole guest world in place. Every guest thread's mach port is
++// suspended and never resumed: the threads are abandoned where they stand, with their stacks and any
++// host locks they happen to hold, which is exactly what the probe exists to measure. The caller is a
++// host UI thread, never a guest thread, so no entry in the list is the caller. Suspending under G
++// keeps the list itself stable (thr_free needs G); only mach calls run while G is held.
++void dm_guest_freeze_all(void) {
++    pthread_mutex_lock(&G);
++    int n = 0;
++    for (thr_t *t = g_all; t; t = t->all) if (t->mport) { thread_suspend(t->mport); n++; }
++    pthread_mutex_unlock(&G);
++    LOG("probe: froze %d guest threads in place; they are never resumed", n);
++}
++
+ static void thr_free(thr_t *t) {   // Holding G; unlink from the all-threads chain and free
+     for (thr_t **p = &g_all; *p; p = &(*p)->all) if (*p == t) { *p = t->all; break; }
+     for (thr_t *u = g_all; u; u = u->all)   // no handoff entry may point at the freed object (note_runnable reads the waker's epoch)
+diff --git a/dm/host/main.c b/dm/host/main.c
+index 42aa7a3..2e51620 100644
+--- a/dm/host/main.c
++++ b/dm/host/main.c
+@@ -125,6 +125,8 @@ static void *keyrace_thread(void *unused) {
+ // Start host loading early. When to call: as one of the first things in the process (iOS: in the App's main() before entering UIApplicationMain); the environment variables loading needs must already be set
+ // (DM_ROMFS / DM_SAVE / DM_TEMP etc. and the cwd -- loading and the prefetch start read them); the arguments must be identical, item by item, to those of the later dm_main (a difference reports a failure and exits).
+ // May be called only once; if not called, loading is synchronous inside main and behavior is exactly as before this call existed. Does not depend on UIKit / Metal.
++void dm_host_preload_reset(void) { atomic_store(&g_pre.started, 0); }   // Probe: a second game in the same process preloads again (the first preload thread was joined by the first main, or is abandoned with its game)
++
+ void dm_host_preload_start(int argc, char **argv) {
+     if (atomic_exchange(&g_pre.started, 1)) return;
+     g_pre.argc = argc; g_pre.argv = calloc((size_t)argc + 1, sizeof(char *));
+diff --git a/dm/ios/Shell/ShellMain.m b/dm/ios/Shell/ShellMain.m
+index 0cb8cdd..6f8db60 100644
+--- a/dm/ios/Shell/ShellMain.m
++++ b/dm/ios/Shell/ShellMain.m
+@@ -5,6 +5,7 @@
+ // the loader, and the host's early loading. dm_shell_present_game() then hands the window to front_ios.m's game view, which starts
+ // dm_main on the big-stack thread through front_ios_boot() below.
+ // One game per process: dm_profile() and dm_host_preload_start() run once, so returning to the library is a relaunch of the app.
++// The probe (DM_PROBE_RETURN, a probe build only) experiments with lifting exactly that: see dm_shell_return_to_library below.
+ // This file provides the symbols front_ios.m takes from main.m and Launcher.swift in the one-game app (front_ios_boot,
+ // front_ios_boot_ok, front_ios_boot_message, front_ios_device_check, dm_locate_game_data, dm_show_launcher): the shell compiles front_ios.m unchanged.
+ #import <UIKit/UIKit.h>
+@@ -22,6 +23,10 @@
+ int dm_main(int argc, char **argv);   // dm/host/main.c compiled in with -Dmain=dm_main
+ UIViewController *front_ios_root(void);
+ void front_ios_focus_event(int ev);
++void dm_host_shutdown_reset(void);   // Probe (hle_lifecycle.c): re-arm the teardown for the next game
++void dm_profile_reload(void);   // Probe (hle_profile.c): the next game loads its own profile
++
++static int g_started, g_boot_once;   // the once guards of dm_shell_start_game and front_ios_boot, at file scope so the probe's return can re-arm them
+ 
+ static char **g_argv; static int g_argc; static int g_boot_ok;
+ 
+@@ -42,8 +47,7 @@ static void log_to(NSString *log) {
+ const char *dm_shell_start_game(const char *const *keys, const char *const *values, int n, const char *const *argv, int argc,
+                                 const char *executable, const char *marker, const char *log_path, const char *cwd) {
+     static char err[512];
+-    static int started;
+-    if (started++) return "A game was already started in this session. Close the app and open it again.";
++    if (g_started++) return "A game was already started in this session. Close the app and open it again.";
+     if (argc < 2) return "The game's start arguments are incomplete.";
+     log_to(@(log_path));
+     fprintf(stderr, "shell: starting %s (%s)\n", argv[1], executable);
+@@ -90,6 +94,28 @@ void dm_shell_present_game(void) {
+                                                 errorHandler:^(NSError *e) { fprintf(stderr, "shell: landscape request: %s\n", e.localizedDescription.UTF8String); }];
+ }
+ 
++// Probe (DM_PROBE_RETURN): front_ios.m froze the guest and ran the teardown without its exit; hand the
++// window back to a fresh library and re-arm every once guard on the start path, so Play can start a
++// game again in this process. The first game's boot thread stays frozen inside dm_main forever, its
++// framework stays loaded (only the image header moves to the next game), and its mappings stay mapped:
++// what that breaks is what the probe measures. Never called in a normal build (the launch plan sets
++// DM_PROBE_RETURN only for probe builds, and the gesture follows it).
++void dm_shell_return_to_library(void) {
++    dm_host_shutdown_reset();
++    dm_host_preload_reset();
++    dm_profile_reload();
++    g_started = 0; g_boot_once = 0; g_boot_ok = 0;
++    UIWindow *window = nil;
++    for (UIScene *s in UIApplication.sharedApplication.connectedScenes)
++        if ([s isKindOfClass:UIWindowScene.class]) for (UIWindow *w in ((UIWindowScene *)s).windows) if (w.isKeyWindow || !window) window = w;
++    if (!window) { fprintf(stderr, "[RED] probe: no window for the library\n"); return; }
++    UIViewController *library = [ShellLibrary makeController];
++    window.rootViewController = library;
++    [library setNeedsUpdateOfSupportedInterfaceOrientations];
++    UIApplication.sharedApplication.idleTimerDisabled = NO;
++    fprintf(stderr, "probe: back at the library; the next Play starts a game in this process\n");
++}
++
+ // ---- what front_ios.m takes from main.m and Launcher.swift ----
+ static void *boot_thread(void *p) {
+     (void)p;
+@@ -99,7 +125,7 @@ static void *boot_thread(void *p) {
+     return NULL;
+ }
+ void front_ios_boot(void) {   // front_ios.m, once the game view exists
+-    static int once; if (once++ || !g_boot_ok) return;
++    if (g_boot_once++ || !g_boot_ok) return;
+     void front_ios_audio_session(void); front_ios_audio_session();
+     pthread_attr_t a; pthread_attr_init(&a); pthread_attr_setstacksize(&a, 64u << 20);
+     pthread_t t; pthread_create(&t, &a, boot_thread, NULL); pthread_detach(t);
+diff --git a/dm/ios/Sources/front_ios.m b/dm/ios/Sources/front_ios.m
+index 5a5f70c..d90f9a7 100644
+--- a/dm/ios/Sources/front_ios.m
++++ b/dm/ios/Sources/front_ios.m
+@@ -18,6 +18,7 @@ UIView *dm_gamepad_view(CGRect frame);
+ void dm_gamepad_reset(void);
+ void dm_gamepad_active(void);
+ void front_ios_boot(void);
++void dm_shell_return_to_library(void);   // ShellMain.m in the shell (a per-game main.m stubs it): probe only, hands the window back to the library after the guest was frozen and torn down
+ int front_ios_boot_ok(void);
+ const char *front_ios_boot_message(void);   // main.m: why a build that keeps the game files off the IPA found none usable (NULL = the generic hint)
+ const char *front_ios_device_check(void);   // main.m: why this device cannot run the games (its GPU has no BC textures; NULL = supported); makes the first Metal device
+@@ -248,9 +249,18 @@ static void front_ios_hud_script_fix(int width) {
+     // The shell speaks the player's language (its catalogues carry Chinese), so this one game-side alert follows
+     // the preferred language too. The wording says what happens: the app closes, reopening it lands on the library.
+     BOOL zh = [NSLocale.preferredLanguages.firstObject hasPrefix:@"zh"];
+-    UIAlertController *a = [UIAlertController alertControllerWithTitle:zh ? @"游戏库" : @"Game library" message:zh ? @"关闭游戏并退出应用？重新打开应用将回到游戏库，未保存的进度将丢失。" : @"Close the game and quit the app? Reopening the app returns to the game library. Unsaved progress is lost." preferredStyle:UIAlertControllerStyleAlert];
++    BOOL probe = getenv("DM_PROBE_RETURN") && atoi(getenv("DM_PROBE_RETURN"));   // the probe shell's launch plan sets it: this build tries to come back to the library in-process instead of closing
++    UIAlertController *a = [UIAlertController alertControllerWithTitle:zh ? @"游戏库" : @"Game library" message:probe ? (zh ? @"返回游戏库（实验）？游戏将被关闭并回到游戏库，未保存的进度将丢失。" : @"Return to the game library (experiment)? The game closes and the library comes back. Unsaved progress is lost.") : (zh ? @"关闭游戏并退出应用？重新打开应用将回到游戏库，未保存的进度将丢失。" : @"Close the game and quit the app? Reopening the app returns to the game library. Unsaved progress is lost.") preferredStyle:UIAlertControllerStyleAlert];
+     [a addAction:[UIAlertAction actionWithTitle:zh ? @"取消" : @"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+-    [a addAction:[UIAlertAction actionWithTitle:zh ? @"关闭游戏" : @"Close game" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) { exit(0); }]];   // the shell opens on its library, so closing the app is the way back to it
++    if (probe) [a addAction:[UIAlertAction actionWithTitle:zh ? @"返回游戏库" : @"Return to library" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
++        // Freeze the guest world first (its threads never run again), then the ordered teardown
++        // without its exit, then hand the window back to a fresh library. What this leaves behind
++        // (held locks, the first game's mappings) is what the probe measures.
++        dm_guest_freeze_all();
++        dm_host_shutdown_return("probe return to library");
++        dm_shell_return_to_library();
++    }]];
++    else [a addAction:[UIAlertAction actionWithTitle:zh ? @"关闭游戏" : @"Close game" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) { exit(0); }]];   // the shell opens on its library, so closing the app is the way back to it
+     [self presentViewController:a animated:YES completion:nil];
+ }
+ - (void)viewDidAppear:(BOOL)a {
+diff --git a/dm/ios/Sources/main.m b/dm/ios/Sources/main.m
+index cb2fddb..c0b45e3 100644
+--- a/dm/ios/Sources/main.m
++++ b/dm/ios/Sources/main.m
+@@ -356,6 +356,7 @@ void front_ios_boot(void) {   // Called by front_ios.m once the window and Metal
+     pthread_t t; pthread_create(&t, &a, boot_thread, NULL); pthread_detach(t);
+ }
+ int front_ios_boot_ok(void) { return g_boot_ok; }
++void dm_shell_return_to_library(void) { exit(0); }   // front_ios.m declares it for the shell's probe; a per-game app has no library under its game, so the probe's return is the app's ordinary close here (and DM_PROBE_RETURN is never set in one)
+ 
+ @interface App : UIResponder <UIApplicationDelegate>
+ @end
