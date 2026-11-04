@@ -44,8 +44,9 @@ reason this project exists (decision 4).
    provides. **Verification on an iPhone 13 Pro (A15, no BC support) is
    a mandatory acceptance item for the first build batch** — the old
    fork's route was proven on that device, this one is not yet.
-2. **Our patches start at 0071**, appended after the upstream series
-   (which currently ends at 0060). Grouping follows the patch inventory
+2. **Our patches start at 0073**, appended after the upstream series
+   (which currently ends at 0072; the queue holds 69 patches on the
+   engine pin in `.upstream-ref`). Grouping follows the patch inventory
    of the old fork's 227 own commits (193 to port, 17 groups), minus
    groups H and I above. Group Q (green-screen bisect switches) is
    optional and undecided. Group A (the GitHub Actions cloud workflow)
