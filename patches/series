@@ -63,3 +63,5 @@
 0095-alert-language.patch
 0096-pad-sync-code.patch
 0097-pad-sync-art.patch
+0098-nsp-script-find-game-files-whose-extension-is-in.patch
+0099-mac-app-replace-the-old-app-by-moves-when-the-vo.patch
