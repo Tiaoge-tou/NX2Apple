@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
+Date: Thu, 5 Nov 2026 11:00:29 +0800
+Subject: [PATCH] Pad: drop the duplicated touch feedback ivar and the orphaned
+ web passthrough
+
+The 0082 graft kept upstream's touch feedback ivar next to its own copy of the same declaration, and carried upstream's geometry-based controlAt and hitTest pair without the layout and geometry state they read, which this pad does not have. The app build rejects the file on both counts. The passthrough served offline HTML pages over the picture, which neither game in this fork shows.
+
+Upstream-Status: fork-only
+Reason: The 0082 graft duplicated the touch feedback ivar and carried a geometry-based web passthrough without its state, and the app build rejects the file
+Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 4
+
+---
+ dm/ios/Sources/DmGamepad.m | 14 --------------
+ 1 file changed, 14 deletions(-)
+
+diff --git a/dm/ios/Sources/DmGamepad.m b/dm/ios/Sources/DmGamepad.m
+index 3b12775..7a0027b 100644
+--- a/dm/ios/Sources/DmGamepad.m
++++ b/dm/ios/Sources/DmGamepad.m
+@@ -574,7 +574,6 @@ static void pads_start(void);   // Physical controllers, below
+     CAShapeLayer *_swap; CATextLayer *_swapLabel; BOOL _swapHeld;
+     UIButton *_menu;                               // generic layouts only: opens the in-game menu (GameMenu.swift); the skin and Hades pads keep their own top row and never show it
+     UIImpactFeedbackGenerator *_touchFeedback;     // DM_TOUCH_HAPTICS: one short feedback per touch-control press edge
+-    UIImpactFeedbackGenerator *_touchFeedback;       // one short feedback per touch-control press edge
+     unsigned _hapticSticks;
+     BOOL _stickShown;                              // the left stick was held at the last refresh
+     BOOL _full, _tap;                              // the 3D layout / the Tap layout is current
+@@ -983,19 +982,6 @@ static CGFloat dist(CGPoint a, CGPoint b) { return hypot(a.x - b.x, a.y - b.y);
+     for (int i = 0; i < 16; i++) if (!_game[i]) { _game[i] = t; [_owner setObject:@(C_GAME | (uint64_t)i << 8) forKey:t]; return YES; }
+     return NO;
+ }
+-// While an offline HTML page is shown over the picture (web_apple.m front_web_touch), a touch no control would take goes to the page instead of the game's touch screen:
+-// the gamepad lets it through. The same tests as touchesBegan
+-int front_web_touch(void);
+-- (BOOL)controlAt:(CGPoint)p {
+-    if (_padOff || (_layout.separated && !CGRectContainsPoint(_layout.controls, p))) return NO;
+-    if (_tap) return NO;
+-    if (dm_pad_hit(self.geo, _full, _layout.separated, _tap, !_stick[0], p).kind != DM_PAD_HIT_NONE) return YES;   // the geometry touchesBegan hits with (DmPadGeometry.h)
+-    return _full && !_stick[1] && [self inRightArea:p];
+-}
+-- (UIView *)hitTest:(CGPoint)p withEvent:(UIEvent *)e {
+-    UIView *v = [super hitTest:p withEvent:e];
+-    return v == self && front_web_touch() && ![self controlAt:p] ? nil : v;
+-}
+ - (void)touchesBegan:(NSSet<UITouch *> *)ts withEvent:(UIEvent *)e {
+     BOOL game = NO;
+     for (UITouch *t in ts) {
