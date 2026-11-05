@@ -1,6 +1,6 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Thu, 5 Nov 2026 07:38:32 +0800
+Date: Thu, 5 Nov 2026 17:42:06 +0000
 Subject: [PATCH] Rename the frame-rate switch SS_DISPLAY_HZ to DM_DISPLAY_HZ
 
 The shell's launcher profile parser refuses any settings row whose env is not a DM_ switch, so both games of the first shell package show a damaged settings list on device. The name came across with the 120 Hz port (0079) from a launcher that did not check. Rename the settings row, the front end's getenv, the guard test and the comments, register the switch in docs/env_switches.tsv, and rename the l10n keys with it (frontend/l10n, in the outer change).
@@ -45,7 +45,7 @@ index 2240f7a..032a7ec 100644
  # Whether this engine follows past 60 is unmeasured (it has no hle_fpslock row for its build yet): an experiment, 2026-10-27.
  display_hz	120
 diff --git a/dm/games/game.py b/dm/games/game.py
-index c86da96..66e1fae 100644
+index 5f8e716..61d2e31 100644
 --- a/dm/games/game.py
 +++ b/dm/games/game.py
 @@ -161,7 +161,7 @@ def header_one(g):
@@ -55,15 +55,15 @@ index c86da96..66e1fae 100644
 -    dh = g.get('display_hz', '0')   # the highest display rate the launcher's frame-rate choice offers (settings.tsv SS_DISPLAY_HZ; the iOS front end drives the present, the present link and the vi vsync event at a rate it measures on the screen, hle_nvn.c): 0 = no choice, 60 Hz only; 120 = the 120 Hz tiers
 +    dh = g.get('display_hz', '0')   # the highest display rate the launcher's frame-rate choice offers (settings.tsv DM_DISPLAY_HZ; the iOS front end drives the present, the present link and the vi vsync event at a rate it measures on the screen, hle_nvn.c): 0 = no choice, 60 Hz only; 120 = the 120 Hz tiers
      if dh not in ('0', '120'): sys.exit(f'{g.id}: display_hz must be 0 or 120: {dh}')
-     fh = g.get('fps_hold', 'on')   # whether the frame step may hold a frame longer than the cap's vsyncs when frames come late (hle_nvn.c fstep_tick): on / off
-     if fh not in ('on', 'off'): sys.exit(f'{g.id}: fps_hold must be on or off: {fh}')
+     fm = g.get('fps_max', '60')   # the highest rate fps_target and the player's Frame rate may take: 120 only for a game checked at that speed (hle_nvn.c fps_high)
+     if fm not in ('60', '120'): sys.exit(f'{g.id}: fps_max must be 60 or 120: {fm}')
 diff --git a/dm/games/settings.tsv b/dm/games/settings.tsv
-index beeab00..98e9d96 100644
+index cba9922..5bb1554 100644
 --- a/dm/games/settings.tsv
 +++ b/dm/games/settings.tsv
 @@ -16,7 +16,7 @@
  #             level=basic  a setting a front end shows first;  needs=<VAR>=<value>  a sub-setting, drawn only while the row that sets <VAR> has that value
- DM_FPS_TARGET	choice	30=30 fps,60=60 fps	DM_GAME_FPS_TARGET	DM_GAME_FPS_TARGET!=0	Game	Frame rate		level=basic
+ DM_FPS_TARGET	choice	30=30 fps,60=60 fps,120=120 fps?DM_GAME_FPS_MAX==120&platform:mac	DM_GAME_FPS_TARGET	DM_GAME_FPS_TARGET!=0	Game	Frame rate		level=basic
  DM_DYNAMIC_RESOLUTION	toggle	-	0	fixups:DYNAMIC_RESOLUTION	Game	Dynamic resolution	Adjusts resolution between 70% and 100% under load. Turn off to keep full resolution for the selected console mode.
 -SS_DISPLAY_HZ	choice	60=60 Hz,120=120 Hz	60	DM_GAME_DISPLAY_HZ!=0	Game	Refresh rate	120 Hz needs a screen that supports it and falls back to 60 Hz on one that does not. Sustained heavy load may throttle with heat, so use it with care.	
 +DM_DISPLAY_HZ	choice	60=60 Hz,120=120 Hz	60	DM_GAME_DISPLAY_HZ!=0	Game	Refresh rate	120 Hz needs a screen that supports it and falls back to 60 Hz on one that does not. Sustained heavy load may throttle with heat, so use it with care.	
@@ -117,7 +117,7 @@ index e055ba4..717c878 100644
  
  
 diff --git a/docs/env_switches.tsv b/docs/env_switches.tsv
-index 713ec38..c0b0904 100644
+index 5622d28..8d07b41 100644
 --- a/docs/env_switches.tsv
 +++ b/docs/env_switches.tsv
 @@ -31,6 +31,7 @@ DM_DBG	diagnostic	When set, prints the guest's `svcOutputDebugString` text to st

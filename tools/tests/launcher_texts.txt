@@ -1,5 +1,6 @@
 120 Hz
 120 Hz needs a screen that supports it and falls back to 60 Hz on one that does not. Sustained heavy load may throttle with heat, so use it with care.
+120 fps
 16:9 (Switch)
 30 fps
 60 Hz
