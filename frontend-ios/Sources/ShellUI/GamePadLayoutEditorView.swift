@@ -288,6 +288,15 @@ struct GamePadLayoutEditorView: View {
                     Text(entry.dx == 0 && entry.dy == 0 ? ShellStrings.text("Built-in place") : ShellStrings.text("Moved"))
                         .shellType(ShellType.note).foregroundStyle(.white.opacity(0.55))
                 }
+                // The generic editor's arrows: one tap moves the chosen key a hundredth of the screen.
+                HStack(spacing: 12) {
+                    Spacer()
+                    nudgeButton(name, systemImage: "chevron.left", label: "Move left", dx: -0.01, dy: 0)
+                    nudgeButton(name, systemImage: "chevron.up", label: "Move up", dx: 0, dy: -0.01)
+                    nudgeButton(name, systemImage: "chevron.down", label: "Move down", dx: 0, dy: 0.01)
+                    nudgeButton(name, systemImage: "chevron.right", label: "Move right", dx: 0.01, dy: 0)
+                    Spacer()
+                }
                 HStack(spacing: 12) {
                     Text(ShellStrings.text("Size")).shellType(ShellType.settingLabel)
                     Spacer()
@@ -323,6 +332,24 @@ struct GamePadLayoutEditorView: View {
 
     private func label(of name: String) -> String {
         game.keys.first { $0.name == name }?.label ?? name
+    }
+
+    private func nudgeButton(_ name: String, systemImage: String, label: String, dx: CGFloat, dy: CGFloat) -> some View {
+        Button { nudge(name, dx: dx, dy: dy) } label: {
+            Image(systemName: systemImage).frame(width: 40, height: 28)
+        }
+        .buttonStyle(ChipButtonStyle())
+        .accessibilityLabel(ShellStrings.text(label))
+    }
+
+    /// One arrow step: the key's stored offset moves with it, capped at a full screen either way (the drawing clamps
+    /// the centre to the screen long before that, in the editor and in the game alike).
+    private func nudge(_ name: String, dx: CGFloat, dy: CGFloat) {
+        var entry = custom.entry(name)
+        entry.dx = min(1, max(-1, entry.dx + dx))
+        entry.dy = min(1, max(-1, entry.dy + dy))
+        custom.set(name, entry)
+        custom.save(game)
     }
 
     private func stepSize(_ name: String, by step: CGFloat) {
