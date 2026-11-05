@@ -977,8 +977,9 @@ class Model(QObject):
                         log=lambda s: self.log(str(s) + '\n'),
                         progress=progress_logger(self.t('dep.phase.download')))
                     self.log(self.t('dep.python.done', str(path)) + '\n')
-                    self.python_path = str(path)
-                    ok = self._make_venv(str(path))
+                    py_exe = Path(path) / 'python.exe' if Path(path).is_dir() else Path(path)
+                    self.python_path = str(py_exe)
+                    ok = self._make_venv(str(py_exe))
                     if not ok:
                         detail = 'venv / package install failed'
                         self.log(self.t('dep.install.fail', detail) + '\n')
@@ -1638,6 +1639,8 @@ class Model(QObject):
             return self.t('fail.a32Program.whatNamed', f.game)
         if f.kind == bf.DISK_FULL and f.detail:
             return self.t('fail.diskFull.whatNeeds', f.detail)
+        if f.kind == bf.PSO_DISK_FULL and f.detail:
+            return self.t('fail.psoDiskFull.whatNeeds', f.detail)
         return self.t(f.what_key)
 
     def _keys_readable(self) -> bool | None:
