@@ -30,6 +30,13 @@ public struct GameDetailView: View {
                             SettingControl(gameID: detail.id, row: row) { actions.onChange(detail.id, row.id, $0) }.equatable()
                             if row.id != section.rows.last?.id { divider }
                         }
+                        // A game whose pad is its own design: its layout editor's entry sits under its button skin row,
+                        // the setting the editor's preview follows.
+                        if let padGame = GamePadLayoutGame.forGame(detail.id),
+                           section.rows.contains(where: { $0.id == padGame.skinRowID }) {
+                            divider
+                            GamePadLayoutEntryRow(gameID: detail.id, arranged: !GamePadCustom.load(padGame).isEmpty)
+                        }
                     }
                 }
             }
