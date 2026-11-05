@@ -25,6 +25,7 @@ final class GermanLocalizationTests: IsolatedDefaultsTestCase {
         // The iOS shell's words that German writes as English does: OK, the controller, the Switch's Minus and Plus buttons, Version.
         // Every other ios.* key needs a German text that differs (ShellStringsTests in frontend-ios checks all six languages).
         "ios.host.ok", "ios.host.padController", "ios.ui.padController", "ios.ui.padMinus", "ios.ui.padPlus", "ios.ui.version",
+        "ios.ui.padKeyNeedolin", "ios.ui.padKeyPause",   // the skill's name, and the word Pause, read the same in German
     ]
 
     func testGermanIsNotLeftInEnglish() {
