@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
 Date: Thu, 5 Nov 2026 07:18:10 +0800
-Subject: [PATCH] Resolution, host side: measured render size in the state 
+Subject: [PATCH] Resolution, host side: measured render size in the state
  page, host-filled mode sizes, nn::oe default resolution
 
 The host half of the resolution service (patch port 0077, group M of the port inventory), carried from the Tiaoge-tou/nxnative fork.
@@ -20,10 +20,10 @@ Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
 ---
  dm/games/0100A00019DE0000/game.tsv |   4 ++
  dm/host/dm.h                       |   8 +++
- dm/host/hle_oe.c                   |  34 ++++++++-
+ dm/host/hle_oe.c                   |  33 ++++++++-
  dm/host/loader.c                   | 112 ++++++++++++++++++++++++++++-
  dm/tools/docs_patches.py           |   8 +++
- 5 files changed, 162 insertions(+), 4 deletions(-)
+ 5 files changed, 162 insertions(+), 3 deletions(-)
 
 diff --git a/dm/games/0100A00019DE0000/game.tsv b/dm/games/0100A00019DE0000/game.tsv
 index b0e47b7..03c6849 100644
@@ -67,16 +67,15 @@ index d216080..408147e 100644
  void dm_gfx_shot_at(long k, const char *path);
  void dm_shot_written(const char *path, int ok);   // The graphics side finished writing a screenshot to disk (diag.c: DM_TICK_HOLD=E:SHOT unfreezes on this)
 diff --git a/dm/host/hle_oe.c b/dm/host/hle_oe.c
-index 0ecef9f..0e70fe4 100644
+index 0ecef9f..968b257 100644
 --- a/dm/host/hle_oe.c
 +++ b/dm/host/hle_oe.c
-@@ -292,9 +292,37 @@ HLE_FORCE("_ZN2nn2gs3sdk26SetGraphicsFrameLengthModeENS1_23GraphicsFrameLengthMo
+@@ -292,8 +292,37 @@ HLE_FORCE("_ZN2nn2gs3sdk26SetGraphicsFrameLengthModeENS1_23GraphicsFrameLengthMo
            void, h_gs_FrameLength, int mode) {
      static int last = -1; if (mode != last) { LOG("gs: graphics frame length mode %d (0 auto, 1 30 fps, 2 60 fps, 3 120 fps)", mode); last = mode; }
  }
 -HLE_FORCE("_ZN2nn2oe27GetDefaultDisplayResolutionEPiS1_", "default display resolution: 1920x1080 docked, 1280x720 handheld", void, h_oe_DefRes, int *w, int *h) {
 -    int con = opmode() == 1; if (w) *w = con ? 1920 : 1280; if (h) *h = con ? 1080 : 720;
--}
 +HLE_FORCE("_ZN2nn2oe27GetDefaultDisplayResolutionEPiS1_", "default display resolution: 1920x1080 docked, the host's handheld size at 720p handheld (profile display_wide + fullscreen: the host's render size)", void, h_oe_DefRes, int *w, int *h) {
 +    int con = opmode() == 1; int x = con ? 1920 : 1280, y = con ? 1080 : 720;
 +    // Profile display_wide (Hades II): with the fullscreen setting on, report the host's render width
@@ -108,9 +107,9 @@ index 0ecef9f..0e70fe4 100644
 +        if (hw >= 320 && hw <= 16384 && !(hw % 8) && (hw > 1280 || getenv("DM_SERVE_NARROW"))) x = (int)hw; }
 +    if (w) *w = x; if (h) *h = y;
 +    static int ncalls; if (ncalls < 16) LOG("default display resolution: %dx%d (call %d)", x, y, ncalls); ncalls++;   // diagnostic: every early answer, not just the first
+ }
  HLE_FORCE("_ZN2nn2oe38GetDefaultDisplayResolutionChangeEventEPNS_2os11SystemEventE", "default display resolution change event: bound, never signaled (the operation mode notification carries the change)",
            void, h_oe_DefResEv, void *ev) { hle_bind_system_event(ev, 0); }
- HLE_FORCE("_ZN2nn2oe40SendServerMaintenanceOverlayNotificationENS_4time9PosixTimeES2_", "server maintenance overlay (through am); the host has no system overlay", void, h_oe_MaintOverlay, int64_t a, int64_t b) { (void)a; (void)b; }
 diff --git a/dm/host/loader.c b/dm/host/loader.c
 index 5bc0117..3697872 100644
 --- a/dm/host/loader.c
