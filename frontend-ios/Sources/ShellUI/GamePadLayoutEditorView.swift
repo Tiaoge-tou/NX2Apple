@@ -272,9 +272,13 @@ struct GamePadLayoutEditorView: View {
 
     private var panel: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(ShellStrings.text("Only the combat keys are arranged here. The title and bag pages keep their layout."))
-                .shellType(ShellType.note).foregroundStyle(.white.opacity(0.55))
-                .fixedSize(horizontal: false, vertical: true)
+            // Silksong's pad has pages of its own (title, bag) that this editor does not touch; Hades II's pad is
+            // one layout whole, so the note would only puzzle there.
+            if game == .silksong {
+                Text(ShellStrings.text("Only the combat keys are arranged here. The title and bag pages keep their layout."))
+                    .shellType(ShellType.note).foregroundStyle(.white.opacity(0.55))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if !skinLabel.isEmpty {
                 Text(String(format: ShellStrings.text("Preview skin: %@"), skinLabel))
                     .shellType(ShellType.note).foregroundStyle(.white.opacity(0.55))
