@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 23:17:41 +0800
+Subject: [PATCH] Loader: a fresh module registry starts with zeroed counters
+
+allocate_modules callocs fresh g_mod/g_loaded arrays on every call but never reset g_nmod/g_nloaded. In a single-load process the counters start at zero anyway, so nothing changes there; a second load in one process (found by the return-to-library probe) kept the first load's counts, the map loop appended past the new arrays' start, and loaded_sym dereferenced the NULL slots left behind (crash at NULL + 0x248 in load_modules -> relocate -> bind_sym).
+
+Upstream-Status: fork-only
+Reason: Fixes a latent loader bug the return-to-library probe exposed: the module registry counters were never reset for a fresh registry, so any second load in one process crashed in relocation. No behaviour change for the single-load flow.
+Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 4
+
+---
+ dm/host/loader.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/dm/host/loader.c b/dm/host/loader.c
+index 5b60cd8..1607135 100644
+--- a/dm/host/loader.c
++++ b/dm/host/loader.c
+@@ -552,6 +552,7 @@ static void allocate_modules(int n, FILE *nros) {
+     }
+     g_mod_capacity = n;
+     g_mod = calloc((size_t)n, sizeof *g_mod); g_loaded = calloc((size_t)n, sizeof *g_loaded);
++    g_nmod = 0; g_nloaded = 0;   // Fresh registry arrays start empty: the counters index into them (the map loop appends through g_nloaded, relocation walks g_nmod). A second load in one process used to keep the first load's counts, leaving the new g_loaded's first slots NULL for loaded_sym to dereference and the relocation walk running past the new modules into zeroed slots.
+     if (!g_mod || !g_loaded) die("cannot allocate %d module slots", n);
+ }
+ static void preload_nros(const char *dir, FILE *f) {
