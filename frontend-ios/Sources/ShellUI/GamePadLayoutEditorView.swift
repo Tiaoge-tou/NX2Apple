@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Opens one game's own pad layout editor from its settings (set by the library, as with the button mapping).
 private struct ShellOpenGamePadLayoutKey: EnvironmentKey {
-    static let defaultValue: ((String) -> Void)? = nil
+    nonisolated(unsafe) static let defaultValue: ((String) -> Void)? = nil
 }
 
 extension EnvironmentValues {
@@ -161,7 +161,7 @@ struct GamePadLayoutEditorView: View {
             .position(c)
             .gesture(dragGesture(key.name, in: size))
             .onTapGesture { selected = key.name }
-            .accessibilityLabel(ShellStrings.text(key.label))
+            .accessibilityLabel(ShellStrings.setting(key.label))
             .zIndex(selected == key.name || drag?.name == key.name ? 2 : 1)
     }
 
@@ -287,7 +287,7 @@ struct GamePadLayoutEditorView: View {
                 Divider().overlay(Color.white.opacity(0.12))
                 let entry = custom.entry(name)
                 HStack {
-                    Text(ShellStrings.text(name == "stick" ? "Left stick" : label(of: name))).shellType(ShellType.settingLabel)
+                    Text(ShellStrings.setting(name == "stick" ? "Left stick" : label(of: name))).shellType(ShellType.settingLabel)
                     Spacer()
                     Text(entry.dx == 0 && entry.dy == 0 ? ShellStrings.text("Built-in place") : ShellStrings.text("Moved"))
                         .shellType(ShellType.note).foregroundStyle(.white.opacity(0.55))
@@ -343,7 +343,7 @@ struct GamePadLayoutEditorView: View {
             Image(systemName: systemImage).frame(width: 40, height: 28)
         }
         .buttonStyle(ChipButtonStyle())
-        .accessibilityLabel(ShellStrings.text(label))
+        .accessibilityLabel(ShellStrings.setting(label))
     }
 
     /// One arrow step: the key's stored offset moves with it, capped at a full screen either way (the drawing clamps
