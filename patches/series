@@ -42,6 +42,9 @@
 0072-nsp-script-the-first-dotnet-with-an-sdk-10-goes.patch
 0073-nsp-script-hand-the-extraction-and-the-shader-sp.patch
 0074-mac-split-a-joy-con-pair-into-two-sideways-contr.patch
+0075-front-mac-hide-the-pointer-before-the-game-takes.patch
+0076-host-read-embedded-sections-from-the-image-that.patch
+0077-ios-shell-link-the-host-into-each-game-s-framewo.patch
 0173-build-ipa-sh-staging.patch
 0174-profile-keys.patch
 0175-serve-patch.patch
@@ -59,7 +62,6 @@
 0187-guards-and-env-registry.patch
 0188-profiles-tex-bc-cpu.patch
 0189-launcher-settings-english.patch
-0190-shell-package-fallback.patch
 0191-display-hz-dm-switch.patch
 0192-pad-profile-switches.patch
 0193-game-named-folders.patch
