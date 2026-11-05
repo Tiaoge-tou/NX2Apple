@@ -21,6 +21,7 @@ final class FrenchLocalizationTests: IsolatedDefaultsTestCase {
         "switch2.badge",   // the console's name
         // The iOS shell's words that French writes as English does: OK, Interface, the Switch's Plus button, Version.
         "ios.host.ok", "ios.ui.interface", "ios.ui.padPlus", "ios.ui.version",
+        "ios.ui.padKeyNeedolin", "ios.ui.padKeyPause",   // the skill's name, and the word Pause, read the same in French
     ]
 
     func testNothingIsLeftInEnglishButTheListedNames() {

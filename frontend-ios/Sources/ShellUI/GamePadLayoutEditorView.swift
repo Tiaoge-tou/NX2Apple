@@ -66,15 +66,21 @@ struct GamePadLayoutEditorView: View {
 
     var body: some View {
         GeometryReader { proxy in
+            // The preview always keeps the screen's own landscape proportions, as the generic editor's does: the games
+            // are landscape, so the keys sit in the canvas exactly where the game draws them, in either orientation.
+            let screenAspect = max(proxy.size.width, proxy.size.height) / max(1, min(proxy.size.width, proxy.size.height))
             let wide = proxy.size.width > proxy.size.height * 1.1 && proxy.size.width >= 600
             if wide {
+                let column = min(340, max(250, (proxy.size.width * 0.34).rounded()))
+                let w = max(200, min(proxy.size.width - column - 20 - 32, (proxy.size.height - 24) * screenAspect))
                 HStack(alignment: .top, spacing: 20) {
-                    canvas
+                    canvas.frame(width: w, height: w / screenAspect)
+                        .frame(maxHeight: .infinity)
                     ScrollView {
                         VStack(alignment: .leading, spacing: 14) { header; panel }.padding(.vertical, 12)
                     }
                     .scrollIndicators(.automatic)
-                    .frame(width: min(340, max(250, (proxy.size.width * 0.34).rounded())))
+                    .frame(width: column)
                 }
                 .padding(.horizontal, 16)
                 .frame(maxWidth: .infinity)
@@ -82,7 +88,7 @@ struct GamePadLayoutEditorView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
                         header
-                        canvas.frame(height: proxy.size.width * 0.62)
+                        canvas.aspectRatio(screenAspect, contentMode: .fit)
                         panel
                     }
                     .padding(.horizontal, 24).padding(.vertical, 20)
