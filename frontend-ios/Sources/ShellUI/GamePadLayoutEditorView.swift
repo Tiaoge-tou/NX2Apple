@@ -1,5 +1,6 @@
+import CoreGraphics
+import ImageIO
 import SwiftUI
-import UIKit
 
 /// Opens one game's own pad layout editor from its settings (set by the library, as with the button mapping).
 private struct ShellOpenGamePadLayoutKey: EnvironmentKey {
@@ -174,13 +175,13 @@ struct GamePadLayoutEditorView: View {
         let c = centre(of: "stick", in: size)
         return ZStack {
             if let folder, let img = padArt(folder, "stick") {
-                Image(uiImage: img).resizable().scaledToFit()
+                Image(decorative: img, scale: 1).resizable().scaledToFit()
             } else {
                 Circle().fill(Color.white.opacity(0.10))
                 Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 1.5)
             }
             if let folder, let knob = padArt(folder, "knob") {
-                Image(uiImage: knob).resizable().scaledToFit().frame(width: d * 0.67, height: d * 0.67)
+                Image(decorative: knob, scale: 1).resizable().scaledToFit().frame(width: d * 0.67, height: d * 0.67)
             } else {
                 Circle().fill(Color.white.opacity(0.16)).frame(width: d * 0.67, height: d * 0.67)
             }
@@ -235,7 +236,7 @@ struct GamePadLayoutEditorView: View {
     /// symbol the pad draws for the eye, the bag and the pause key, arrows for the Hades D-pad).
     @ViewBuilder private func keyFace(_ key: GamePadLayoutGame.Key, diameter d: CGFloat) -> some View {
         if let folder, let img = padArt(folder, key.name) {
-            Image(uiImage: img).resizable().scaledToFit()
+            Image(decorative: img, scale: 1).resizable().scaledToFit()
         } else {
             ZStack {
                 Circle().fill(Color.white.opacity(0.10))
@@ -264,9 +265,12 @@ struct GamePadLayoutEditorView: View {
     }
 
     /// A pad art image from the app bundle, where the build stages the sets (dm/<folder>/<name>.png, as DmGamepad reads).
-    private func padArt(_ folder: String, _ name: String) -> UIImage? {
-        guard let path = Bundle.main.resourcePath else { return nil }
-        return UIImage(contentsOfFile: path + "/dm/\(folder)/\(name).png")
+    /// A CGImage through ImageIO, as ShellArtwork decodes, so this file builds on macOS as well as iOS (no UIKit).
+    private func padArt(_ folder: String, _ name: String) -> CGImage? {
+        guard let path = Bundle.main.resourcePath,
+              let data = try? Data(contentsOf: URL(fileURLWithPath: path + "/dm/\(folder)/\(name).png")),
+              let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        return CGImageSourceCreateImageAtIndex(source, 0, nil)
     }
 
     // MARK: The panel
