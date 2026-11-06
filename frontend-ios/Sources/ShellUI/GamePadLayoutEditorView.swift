@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Opens one game's own pad layout editor from its settings (set by the library, as with the button mapping).
 private struct ShellOpenGamePadLayoutKey: EnvironmentKey {

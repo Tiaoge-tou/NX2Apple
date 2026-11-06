@@ -1,0 +1,98 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
+Date: Fri, 6 Nov 2026 07:57:18 +0800
+Subject: [PATCH] Silksong: keep the resolution site lists out of the patch
+ registry
+
+The four site lists are private to Silksong's patches.py (they only build its cuts), so give them lowercase names the registry test does not read as tables. HOST_FILLS is a real table patch_nso.py reads, so name it in the registry test's list of known kinds, next to MATCH_CUTS.
+
+Upstream-Status: fork-only
+Reason: The registry test does not know the fork's HOST_FILLS table kind, and Silksong's private resolution site lists read as registry tables
+Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 4
+
+---
+ dm/games/010013C00E930000/patches.py | 18 +++++++++---------
+ dm/tools/tests/test_patches.py       |  2 +-
+ 2 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/dm/games/010013C00E930000/patches.py b/dm/games/010013C00E930000/patches.py
+index ca80f33..fbb125a 100644
+--- a/dm/games/010013C00E930000/patches.py
++++ b/dm/games/010013C00E930000/patches.py
+@@ -98,8 +98,8 @@ HOST_FILLS = {
+ # stored -- so the stub writes only that register (adrp + ldr w + b back: no flags, no LR, nothing else observable). The flags
+ # matter at the first site: the csel two instructions later still tests the tst before it. Sites in the order of the former cuts.
+ # The handheld cell (+0x40, the width at 720 from DM_RENDER_WIDTH_HD, 1280 without the variable) is read by one more site, in
+-# _WIDTH_SITES_HD: the getter's entry default, the register every handheld return of the getter flows through.
+-_WIDTH_SITES = [
++# _width_sites_hd: the getter's entry default, the register every handheld return of the getter flows through.
++_width_sites = [
+   (0x124e2f8, 8, '08f08052', 'size getter, docked path (dual check)'),
+   (0x124e324, 8, '08f08052', 'size getter, docked path (single check)'),
+   (0x124e364, 8, '08f08052', 'constant size getter'),
+@@ -109,7 +109,7 @@ _WIDTH_SITES = [
+   (0x23f1354, 0, '00f08052', 'Screen.SetResolution request (defaults initialiser)'),
+   (0x296b530, 0, '00f08052', 'Screen.SetResolution request (settings apply)'),
+ ]
+-_WIDTH_SITES_HD = [
++_width_sites_hd = [
+   (0x124e238, 23, '17a08052', 'size getter, handheld width (the entry default every handheld return flows through)'),
+   (0xb21fb4, 8, '08a08052', 'display-state ctor, current width (the pair the apply step crops by)'),
+   (0x12653a4, 10, '2a1140b9', 'display init: current width copied from mode[0] (platform-reported native size)'),
+@@ -120,7 +120,7 @@ _WIDTH_SITES_HD = [
+ # height (loader.c dm_fps_state_apply), so the lowered-resolution frame-rate tier shrinks the render target at every site at
+ # once and every other build renders exactly as before. Same stub shape as the widths: the mov overwrites its register
+ # unconditionally, so adrp + ldr w + b back touches nothing else (the getter's csel still tests the tst before the pair)
+-_HEIGHT_SITES = [
++_height_sites = [
+   (0x124e2fc, 9, '09878052', 'size getter, docked path (dual check)'),
+   (0x124e32c, 8, '08878052', 'size getter, docked path (single check)'),
+   (0x124e36c, 8, '08878052', 'constant size getter'),
+@@ -130,29 +130,29 @@ _HEIGHT_SITES = [
+   (0x23f134c, 1, '01878052', 'Screen.SetResolution request (defaults initialiser)'),
+   (0x296b524, 1, '01878052', 'Screen.SetResolution request (settings apply)'),
+ ]
+-_HEIGHT_SITES_HD = [
++_height_sites_hd = [
+   (0x124e23c, 22, '165a8052', 'size getter, handheld height (the entry default beside the handheld width)'),
+   (0xb21fd0, 8, '085a8052', 'display-state ctor, current height (the pair the apply step crops by)'),
+   (0x12653ac, 9, '291540b9', 'display init: current height copied from mode[0] (platform-reported native size)'),
+ ]
+ def render_width(ctx):
+     here, emit, site, put, state = ctx.here, ctx.emit, ctx.site, ctx.put, ctx.state
+-    for off, reg, orig, what in _WIDTH_SITES:
++    for off, reg, orig, what in _width_sites:
+         site(off, orig)
+         start = here(); emit(ADRP(reg, here(), state)); emit(LDRW(reg, reg, 14))   # ldr wN, [xN, #0x38] (the width, low word of the packed render size)
+         emit(B(here(), off + 4))
+         put(off, [B(off, start)], f'{what}: render width from the host render size (state page +0x38)')
+-    for off, reg, orig, what in _WIDTH_SITES_HD:
++    for off, reg, orig, what in _width_sites_hd:
+         site(off, orig)
+         start = here(); emit(ADRP(reg, here(), state)); emit(LDRW(reg, reg, 16))   # ldr wN, [xN, #0x40] (the handheld width, low word of the packed handheld render size)
+         emit(B(here(), off + 4))
+         put(off, [B(off, start)], f'{what}: render width from the host render size (state page +0x40)')
+-    for off, reg, orig, what in _HEIGHT_SITES:
++    for off, reg, orig, what in _height_sites:
+         site(off, orig)
+         start = here(); emit(ADRP(reg, here(), state)); emit(LDRW(reg, reg, 15))   # ldr wN, [xN, #0x3c] (the height, high word of the packed render size)
+         emit(B(here(), off + 4))
+         put(off, [B(off, start)], f'{what}: render height from the host render size (state page +0x3c)')
+-    for off, reg, orig, what in _HEIGHT_SITES_HD:
++    for off, reg, orig, what in _height_sites_hd:
+         site(off, orig)
+         start = here(); emit(ADRP(reg, here(), state)); emit(LDRW(reg, reg, 17))   # ldr wN, [xN, #0x44] (the handheld height, high word of the packed handheld render size)
+         emit(B(here(), off + 4))
+diff --git a/dm/tools/tests/test_patches.py b/dm/tools/tests/test_patches.py
+index d7c64ff..79ba94a 100644
+--- a/dm/tools/tests/test_patches.py
++++ b/dm/tools/tests/test_patches.py
+@@ -63,7 +63,7 @@ class Registry(unittest.TestCase):
+                 self.assertRegex(bid, r'^[0-9a-f]{32}$')
+                 self.assertEqual(len(names), len(set(names)))
+                 for name in names: self.assertRegex(name, r'^[A-Z][A-Z0-9_]*$')
+-            self.assertFalse({k for k in vars(m) if k.isupper() and k not in ('CUTS', 'OBS', 'FRAME_STEP', 'CAPABILITIES', 'MATCH_CUTS', 'BINDING')} - set(dir(__import__('nso_asm'))),
++            self.assertFalse({k for k in vars(m) if k.isupper() and k not in ('CUTS', 'OBS', 'FRAME_STEP', 'CAPABILITIES', 'MATCH_CUTS', 'HOST_FILLS', 'BINDING')} - set(dir(__import__('nso_asm'))),
+                              f'{p}: a table patch_nso.py does not read')
+             # every patch file states each patch's binding (docs_patches.py "Binding"), and no goal is tighter than the binding now
+             self.assertTrue(getattr(m, 'BINDING', None), f'{p}: no BINDING (docs/agents/game-patches.md, "Binding")')
