@@ -548,7 +548,7 @@ final class Clock: @unchecked Sendable { var date: Date; init(_ d: Date) { date 
         let model = ShellHostModel(config: box.config())
         model.actions.onShowLog(Fixtures.orbit)
         #expect(model.log?.title == "Orbit Fixture" && model.log?.text == nil)
-        try box.write("boot ok\nframe 1\n", to: box.appData.appendingPathComponent(Fixtures.orbit).appendingPathComponent("log.txt"))
+        try box.write("boot ok\nframe 1\n", to: model.appFolder(for: Fixtures.orbit).appendingPathComponent("log.txt"))
         model.actions.onShowLog(Fixtures.orbit)
         #expect(model.log?.text == "boot ok\nframe 1\n" && model.log?.truncated == false)
     }
@@ -595,7 +595,7 @@ final class Clock: @unchecked Sendable { var date: Date; init(_ d: Date) { date 
         await model.playNow(Fixtures.orbit)
         let game = try #require(launcher.launched.first)
         #expect(game.titleID == Fixtures.orbit && game.environment["DM_OPMODE"] == "0" && game.environment["DM_SHOW_FPS"] == "0")
-        #expect(game.dataURL.lastPathComponent == Fixtures.orbit && game.frameworkURL.lastPathComponent == "DmGame.framework")
+        #expect(game.dataURL == model.appFolder(for: Fixtures.orbit) && game.frameworkURL.lastPathComponent == "DmGame.framework")
         #expect(game.cloudSavesURL == nil && model.notice == nil)
     }
 

@@ -285,7 +285,7 @@ struct GamePadLayoutEditorView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if !skinLabel.isEmpty {
-                Text(String(format: ShellStrings.text("Preview skin: %@"), skinLabel))
+                Text(ShellStrings.text("Preview skin: \(skinLabel)"))
                     .shellType(ShellType.note).foregroundStyle(.white.opacity(0.55))
             }
             if let name = selected {

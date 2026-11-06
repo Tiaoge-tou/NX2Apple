@@ -808,6 +808,7 @@
   "ios.ui.padLayoutResetAllNote": "把这个游戏的每个按键放回内置位置和大小。",
   "ios.ui.padLayoutResetKey": "重置此按键",
   "ios.ui.padLayoutShared": "游戏内的布局编辑器使用同一份布局。",
+  "ios.ui.padLayoutTitle": "按键布局",
   "ios.ui.padLeft": "左",
   "ios.ui.padLeftButton": "左侧按键",
   "ios.ui.padLeftShoulder": "左肩键",

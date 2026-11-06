@@ -45,6 +45,23 @@ final class Sandbox: @unchecked Sendable {
         return dir
     }
 
+    /// The folder the shell uses for a game: named for the game (GameFolder), not by its title ID. The title-ID
+    /// folder is the legacy one the shell renames on sight, so a test that stages or reads a game's data after
+    /// the shell has seen it has to use this one.
+    func appFolder(for id: String) -> URL {
+        let name = GameCatalogue.scan(root: games).first { $0.id == id }?.manifest?.name
+        return appData.appendingPathComponent(GameFolder.folderName(forGameName: name) ?? id, isDirectory: true)
+    }
+
+    /// giveAppData in the folder the shell uses for the game.
+    @discardableResult func giveNamedAppData(_ id: String = Fixtures.orbit) throws -> URL {
+        let dir = appFolder(for: id)
+        let tree = dir.appendingPathComponent("romfs", isDirectory: true)
+        try FileManager.default.createDirectory(at: tree, withIntermediateDirectories: true)
+        try Data().write(to: tree.appendingPathComponent("fixture.marker"))
+        return dir
+    }
+
     func write(_ text: String, to url: URL) throws {
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try Data(text.utf8).write(to: url)

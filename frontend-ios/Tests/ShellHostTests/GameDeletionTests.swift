@@ -7,7 +7,7 @@ import Testing
 @MainActor @Suite struct GameDeletionTests {
     /// The orbit fixture's folder with game data, add-on content, saves, shader caches, a temp folder and a log.
     private func fill(_ box: Sandbox) throws -> URL {
-        let dir = try box.giveAppData()
+        let dir = try box.giveNamedAppData()
         for file in ["aoc/0.img", "save/0/file.bin", "save_device/0/file.bin", "save.work/0/file.bin", "temp/t.bin", "log.txt"] {
             try box.write("x", to: dir.appendingPathComponent(file))
         }
