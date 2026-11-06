@@ -24,7 +24,6 @@ import Testing
         "OK": ["de", "sv", "fr", "it"],
         "60 Hz": ["de", "sv", "fr", "it"], "120 Hz": ["de", "sv", "fr", "it"],   // units, as the fps ones above
         "120 fps": ["de", "sv", "it"],
-        "16:9 (Switch)": ["de", "sv", "fr", "it"],                      // a shape and a name
         "Glass": ["sv", "it"], "Thorn": ["sv", "it"], "Moon": ["sv", "it"], "Black iron": ["sv", "it"],   // skin names this fork adds
         "Bind": ["sv"], "Needolin": ["de", "sv", "fr", "it"], "Pause": ["de", "fr"],   // key names: words, and a name from the game
     ]
