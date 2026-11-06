@@ -810,6 +810,7 @@
   "ios.ui.padLayoutResetAllNote": "Puts every key of this game back to its built-in place and size.",
   "ios.ui.padLayoutResetKey": "Reset this key",
   "ios.ui.padLayoutShared": "The game keeps the same arrangement in its own layout editor.",
+  "ios.ui.padLayoutTitle": "Button layout",
   "ios.ui.padLeft": "Left",
   "ios.ui.padLeftButton": "Left button",
   "ios.ui.padLeftShoulder": "Left shoulder",

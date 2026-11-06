@@ -27,9 +27,9 @@ import Testing
     }
 
     @Test func playExtractsOnceAndRetriesAnInterruptedUpdate() async throws {
-        let box = try Sandbox(), gameFolder = try box.giveAppData()
+        let box = try Sandbox(), gameFolder = try box.giveNamedAppData()
         let save = gameFolder.appendingPathComponent("save/progress.sav")
-        let otherCache = box.appData.appendingPathComponent(Fixtures.chain + "/.shader-resources/msl-" + UUID().uuidString + "/" + shader)
+        let otherCache = box.appFolder(for: Fixtures.chain).appendingPathComponent(".shader-resources/msl-" + UUID().uuidString + "/" + shader)
         try box.write("player save", to: save)
         try box.write("other game shaders", to: otherCache)
         let launcher = RecordingLauncher(), model = ShellHostModel(config: box.config(), launcher: launcher)
@@ -77,7 +77,7 @@ import Testing
     }
 
     @Test func interruptedExtractionsAreRemovedBeforeRetryOrCacheHit() async throws {
-        let box = try Sandbox(), gameFolder = try box.giveAppData()
+        let box = try Sandbox(), gameFolder = try box.giveNamedAppData()
         let launcher = RecordingLauncher(), model = ShellHostModel(config: box.config(), launcher: launcher)
         let framework = box.games.appendingPathComponent(Fixtures.orbit + "/DmGame.framework")
         let packed = framework.appendingPathComponent("msl-" + UUID().uuidString + ".aar")
@@ -101,7 +101,7 @@ import Testing
     }
 
     @Test func looseShadersAndPlayerOverrideRetainTheirPaths() async throws {
-        let box = try Sandbox(), gameFolder = try box.giveAppData()
+        let box = try Sandbox(), gameFolder = try box.giveNamedAppData()
         let launcher = RecordingLauncher(), model = ShellHostModel(config: box.config(), launcher: launcher)
         let framework = box.games.appendingPathComponent(Fixtures.orbit + "/DmGame.framework")
         try box.write("bundled", to: framework.appendingPathComponent("msl/" + shader))

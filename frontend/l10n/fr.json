@@ -805,6 +805,7 @@
   "ios.ui.padLayoutResetAllNote": "Remet chaque touche de ce jeu à sa position et à sa taille intégrées.",
   "ios.ui.padLayoutResetKey": "Réinitialiser cette touche",
   "ios.ui.padLayoutShared": "Le jeu utilise la même disposition dans son propre éditeur de disposition.",
+  "ios.ui.padLayoutTitle": "Disposition des touches",
   "ios.ui.padLeft": "Gauche",
   "ios.ui.padLeftButton": "Bouton de gauche",
   "ios.ui.padLeftShoulder": "Épaule gauche",

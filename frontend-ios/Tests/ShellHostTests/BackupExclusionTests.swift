@@ -5,7 +5,7 @@ import Testing
 /// #618: the game files are many GB and `Documents` is in the iCloud backup, so the backup passed 5 GB. Game data is marked, saves are not.
 @MainActor @Suite struct BackupExclusionTests {
     private func filled(_ box: Sandbox) throws -> URL {
-        let dir = try box.giveAppData()
+        let dir = try box.giveNamedAppData()
         try Data(count: BackupExclusion.smallFileLimit + 1).write(to: dir.appendingPathComponent("romfs.img"))
         for file in ["aoc/0.img", "pso/cache.bin", "temp/t.bin", "save/0/file.bin", "save_device/0/file.bin", "save.work/0/file.bin", "env.txt", "log.txt"] {
             try box.write("x", to: dir.appendingPathComponent(file))

@@ -812,6 +812,7 @@
   "ios.ui.padLayoutResetAllNote": "Setzt jede Taste dieses Spiels auf ihre eingebaute Position und Größe zurück.",
   "ios.ui.padLayoutResetKey": "Diese Taste zurücksetzen",
   "ios.ui.padLayoutShared": "Das Spiel verwendet dieselbe Anordnung in seinem eigenen Layout-Editor.",
+  "ios.ui.padLayoutTitle": "Tastenlayout",
   "ios.ui.padLeft": "Links",
   "ios.ui.padLeftButton": "Linke Taste",
   "ios.ui.padLeftShoulder": "Linke Schultertaste",
