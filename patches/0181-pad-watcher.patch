@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Tue, 3 Nov 2026 21:29:41 +0800
-Subject: [PATCH] Pad watcher: the host reads Silksong's game state and
+Date: Fri, 6 Nov 2026 10:44:57 +0800
+Subject: [PATCH] Pad watcher: the host reads Silksong's game state and 
  publishes the pad mode, tab and page
 
 The host half of the touch pad's scene awareness (patch port 0081, group D part 1 of the port inventory), carried from the Tiaoge-tou/nxnative fork.
@@ -11,7 +11,6 @@ hle_hid.c gains the watcher: with the pad skin on (DM_PAD_SKIN) and a known clas
 Upstream-Status: fork-only
 Reason: Silksong pad watcher: pad mode, inventory tab and UI page from the game's own state (PROJECT.md Phase 2)
 Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
-
 ---
  dm/host/dm_input.h       |  22 ++++++++
  dm/host/hle_hid.c        | 117 +++++++++++++++++++++++++++++++++++++++
@@ -19,7 +18,7 @@ Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
  3 files changed, 141 insertions(+)
 
 diff --git a/dm/host/dm_input.h b/dm/host/dm_input.h
-index f784e7c..e0abef1 100644
+index fa51e93..ca95bb2 100644
 --- a/dm/host/dm_input.h
 +++ b/dm/host/dm_input.h
 @@ -13,6 +13,28 @@ enum {
@@ -52,11 +51,11 @@ index f784e7c..e0abef1 100644
  // merged axes' eight stick-direction bits (16..23), one flat bitset; no latches are consumed (the game's own reads
  // keep them). The NpadButton SL / SR bits (24 / 25) never fire: no input source of this host reports them
 diff --git a/dm/host/hle_hid.c b/dm/host/hle_hid.c
-index 90e798e..49fc2b4 100644
+index 38b433d..0c950d2 100644
 --- a/dm/host/hle_hid.c
 +++ b/dm/host/hle_hid.c
-@@ -63,6 +63,123 @@ static void script_set(uint64_t buttons, int32_t lx, int32_t ly, int32_t rx, int
-     shake_note();
+@@ -80,6 +80,123 @@ static void script_set(uint64_t buttons, int32_t lx, int32_t ly, int32_t rx, int
+     shake_note(0);
  }
  uint64_t dm_input_samples(void) { return (uint64_t)atomic_load(&g_sampling); }
 +// ---- Pad mode from the game's own state (the touch gamepad hides in cutscenes and loads and switches to its bag layout in the inventory; DmGamepad.m polls dm_pad_mode) ----
@@ -180,7 +179,7 @@ index 90e798e..49fc2b4 100644
  //   L<x>/<y> and R<x>/<y> = a stick tilted part way (each -1 to 1, y up: a cursor that a full tilt sweeps past its target), T<x>x<y> = a touch at normalized picture coordinates (origin top left) for the hold time, and Shake = the controller shaken for the hold time (at least one whole shake);
  //   held 0.15 s by default, at most KEY_STEPS steps (counted after repeats are expanded). Goes through player 1's scripted path (script_set), ORed with keyboard / touch and player 1's controller, none overrides another. Times are counted from host start.
 diff --git a/dm/tools/docs_patches.py b/dm/tools/docs_patches.py
-index e35fbed..28d9125 100644
+index da14969..bf461b5 100644
 --- a/dm/tools/docs_patches.py
 +++ b/dm/tools/docs_patches.py
 @@ -83,6 +83,8 @@ HOST_BINDING = [
