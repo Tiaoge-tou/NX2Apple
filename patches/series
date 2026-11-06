@@ -50,6 +50,7 @@
 0080-keep-the-selected-python-when-generating-the-mac.patch
 0081-support-steam-controller-and-shared-mac-control.patch
 0082-ios-shell-copy-a-game-s-packed-shader-image-into.patch
+0083-test-table-of-uniform-handles-expects-the-pool-m.patch
 0173-build-ipa-sh-staging.patch
 0174-profile-keys.patch
 0175-serve-patch.patch
@@ -80,4 +81,3 @@
 0201-pad-drop-the-duplicated-touch-feedback-ivar-and.patch
 0202-silksong-keep-the-resolution-site-lists-out-of-t.patch
 0203-ios-tests-give-the-romfs-locator-fixture-the-pro.patch
-0204-docs-regenerate-the-env-switch-table.patch
