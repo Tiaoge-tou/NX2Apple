@@ -1,0 +1,54 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
+Date: Fri, 6 Nov 2026 07:58:57 +0800
+Subject: [PATCH] docs: regenerate the env switch table
+
+Run dm/tools/env_switches.py: the DM_PAD_BAG, DM_PAD_HADES and DM_PAD_SKIN rows return to the order the generator writes, and the DM_FONT_CACHE and DM_SHARED_FONT_SMALL rows go, as nothing in the tree reads those switches any more.
+
+Upstream-Status: fork-only
+Reason: The env switch table is out of the order its generator writes and still lists two switches nothing reads
+Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 4
+
+---
+ docs/env_switches.tsv | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/docs/env_switches.tsv b/docs/env_switches.tsv
+index b880f1a..9c76040 100644
+--- a/docs/env_switches.tsv
++++ b/docs/env_switches.tsv
+@@ -1,6 +1,3 @@
+-DM_PAD_BAG	diagnostic	`0` keeps the touch pad out of the inventory (bag) layout of DmGamepad.m; on by default
+-DM_PAD_HADES	diagnostic	`1` gives the touch pad Hades II's layout and art instead of Silksong's (DmGamepad.m); the build script sets it for a Hades II build, and the game's pad_hades profile field makes the front end set it where no env file runs (a shell framework)
+-DM_PAD_SKIN	diagnostic	`1` turns the touch pad's skin system on (DmGamepad.m); the host's pad watcher (hle_hid.c) runs only with it; the game's pad_skin profile field makes the front end set it where no env file runs (a shell framework)
+ name	class	meaning
+ DM_AB	diagnostic	`=<frames>` splits the run into phases of that many frames and alternates every switch set to `ab` (on in the odd phases); logs an `[ab]` line per phase with GPU and frame time and attachment traffic
+ DM_ALIAS_SIZE	diagnostic	`=<bytes>` gives the guest an alias region of that size instead of the profile's (at least 256 MB, whole host pages; the heap and stacks stay as they are): `0x1000000000`, the Switch's 64 GB, holds what a game reserves unchanged; the NSP script's address region check sets it (Mac only: an iPhone has no room)
+@@ -43,7 +40,6 @@ DM_EXEC_OUT	path	File `oe::ExecuteProgram` records the next program and its para
+ DM_EXPERIMENTAL_BUILDER	switch	`1` makes the NSP script run the extraction and the shader split through nxbuild's binaries beside `NXB_BIN` (the path of its `nxb` binary) where nxbuild supports the case, with the same outputs; any other case, an unsupported stage or an output that fails the checks runs the standard way (the Mac launcher's Use experimental builder setting)
+ DM_FD_LOG	diagnostic	`=<seconds>` logs, every that many seconds, the number and kinds of file descriptors the process has open
+ DM_FIXED_TIME	switch	`=<seconds>`: the user clock always returns that time and the host time zone is pinned to UTC, for deterministic comparison
+-DM_FONT_CACHE	diagnostic	
+ DM_FOCUS_KEEP	switch	`1` keeps the game in focus while its Mac window is up, whichever app is active (minimizing still counts); `scripts/regress.py` sets it, so another app taking the key window during a run does not pause a game that stops out of focus
+ DM_FONT_DIR	path	Folder of the shared-font stand-ins (`standard.ttf`, `nintendo_ext.ttf` with the button icons); the app, the Mac launcher and the NSP script set it
+ DM_FORCE_STRICT	diagnostic	`=1` makes the loader fail on forced-hook entries no module references, instead of only noting them (for checking a mistyped list)
+@@ -239,8 +235,11 @@ DM_OODLE_JOB	path	`=<job file>`: the host runs the game's own Oodle decoder on e
+ DM_OODLE_MODULES	path	The rewritten modules the Mac host's Oodle tool mode loads when `shader_split.py` decodes Trinity packs; set by the NSP script
+ DM_OODLE_SERVE	switch	`=1`: the host answers decode requests on stdin / stdout with the game's own Oodle (or LZ5) decoder from the guest main thread before the SDK starts, until stdin ends
+ DM_OPMODE	player	The operation mode the game sees: `0` handheld, `1` console (default: the profile's `op_mode`, console unless set); read once at startup
++DM_PAD_BAG	diagnostic	`0` keeps the touch pad out of the inventory (bag) layout of DmGamepad.m; on by default
++DM_PAD_HADES	diagnostic	`1` gives the touch pad Hades II's layout and art instead of Silksong's (DmGamepad.m); the build script sets it for a Hades II build, and the game's pad_hades profile field makes the front end set it where no env file runs (a shell framework)
+ DM_PAD_MAP	player	Mac controllers: `<name>=<name>,…` makes the button that sends the first by default send the second (or `none`), e.g. `A=B,B=A` swaps them (`input_map.h`)
+ DM_PAD_MERGE	switch	`=1` merges every controller into player 1, as before, instead of giving each controller a player of its own (Mac and iOS)
++DM_PAD_SKIN	diagnostic	`1` turns the touch pad's skin system on (DmGamepad.m); the host's pad watcher (hle_hid.c) runs only with it; the game's pad_skin profile field makes the front end set it where no env file runs (a shell framework)
+ DM_PATCH_FRONT	switch	`=<bytes>`: the size of the patch area right before the module base for a long text (`BIG_TEXT`); set only by the rewriter's own rerun with the size it needs
+ DM_PHONE_MOTION	switch	On iOS, whether the phone's own device motion drives player 1's six-axis sensor: `auto` (default) while no controller supplies fresh motion, `1` phone only, `0` never; each source keeps its own orientation
+ DM_PICTURE_FIT	player	`fill` scales the 16:9 picture on the iPhone and iPad until it covers the screen in landscape and crops the edges (a portrait or tabletop split and a TV stay fitted); `fit` or unset, the largest 16:9 rectangle with black bars. Launcher and in-game menu setting
+@@ -333,7 +332,6 @@ DM_SF_TRACE	diagnostic	`=1` logs every request on the game's own HIPC client ses
+ DM_SHAKE_G	switch	`=<G>`: on iOS, the acceleration beyond gravity above which a flick of the phone shakes the controller's six-axis sensor (default 1.5)
+ DM_SHARED_FONT	path	Font file served for every shared-font type except the Nintendo extension (default `$DM_FONT_DIR/standard.ttf`, then macOS's Arial Unicode)
+ DM_SHARED_FONT_EXT	path	Font file served for shared-font type 5, the Nintendo extension with the button icons (default `$DM_FONT_DIR/nintendo_ext.ttf`, made by `make_ext_font.py`)
+-DM_SHARED_FONT_SMALL	diagnostic	
+ DM_SHELL	switch	`1` in the environment the shell's launch plan starts a game with: a shell launched this game, so the game view shows the way back to its library (front_ios.m)
+ DM_SHELL_FRAMEWORKS	path	the game frameworks build_shell.sh embeds in the shell app, one folder per line
+ DM_SHELL_NAME	switch	the shell app's name under its icon (build_shell.sh, default NX2Apple)
