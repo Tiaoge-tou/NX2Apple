@@ -73,3 +73,6 @@
 0199-loader-a-fresh-module-registry-starts-with-zeroe.patch
 0200-hades-pad-the-layout-editor-reaches-the-hades-pa.patch
 0201-pad-drop-the-duplicated-touch-feedback-ivar-and.patch
+0202-silksong-keep-the-resolution-site-lists-out-of-t.patch
+0203-ios-tests-give-the-romfs-locator-fixture-the-pro.patch
+0204-docs-regenerate-the-env-switch-table.patch
