@@ -650,6 +650,7 @@
   "ios.ui.padLayoutResetAllNote": "Sätter tillbaka varje knapp i det här spelet till dess inbyggda plats och storlek.",
   "ios.ui.padLayoutResetKey": "Återställ den här knappen",
   "ios.ui.padLayoutShared": "Spelet använder samma arrangemang i sin egen layoutredigerare.",
+  "ios.ui.padLayoutTitle": "Knapplayout",
   "ios.ui.padLeft": "Vänster",
   "ios.ui.padLeftButton": "Vänstra knappen",
   "ios.ui.padLeftShoulder": "Vänster axelknapp",

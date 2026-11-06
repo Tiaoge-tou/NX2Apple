@@ -37,7 +37,7 @@ final class LayoutTests: XCTestCase {
     func testSettingsOverlay() {
         XCTAssertFalse(ShellLayout.column.settingsFloat(402), "a phone held upright")
         XCTAssertTrue(ShellLayout.coverFlow(regular: false).settingsFloat(750), "a phone on its side")
-        XCTAssertFalse(ShellLayout.coverFlow(regular: false).settingsFloat(525), "the folded foldable on its side")
+        XCTAssertTrue(ShellLayout.coverFlow(regular: false).settingsFloat(525), "the folded foldable on its side: this fork's phone panel is capped at 0.44 of the width, so the library stays in view")
         XCTAssertTrue(ShellLayout.grid.settingsFloat(834), "an iPad held upright")
         XCTAssertFalse(ShellLayout.grid.settingsFloat(626), "the unfolded foldable held upright: too narrow for both")
         XCTAssertTrue(ShellLayout.coverFlow(regular: true).settingsFloat(1194))
