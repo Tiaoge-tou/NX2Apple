@@ -23,7 +23,7 @@ Issue: LNPANDY/NX2Apple#123
  6 files changed, 16 insertions(+), 2 deletions(-)
 
 diff --git a/dm/ios/Sources/main.m b/dm/ios/Sources/main.m
-index 23e71a0..c11b457 100644
+index 56267e1..076d4ef 100644
 --- a/dm/ios/Sources/main.m
 +++ b/dm/ios/Sources/main.m
 @@ -234,6 +234,9 @@ static int boot_env(void) {
@@ -37,10 +37,10 @@ index 23e71a0..c11b457 100644
      NSMutableArray<NSString *> *from_file = [NSMutableArray array], *from_launch = [NSMutableArray array];
      for (char **e = environ; *e; e++) {   // set at launch (Xcode, devicectl): before the env files, and the launcher keeps them
 diff --git a/dm/ios/project.yml b/dm/ios/project.yml
-index 16b4165..ed0010a 100644
+index e542cf1..8964dbb 100644
 --- a/dm/ios/project.yml
 +++ b/dm/ios/project.yml
-@@ -44,6 +44,7 @@ targets:
+@@ -48,6 +48,7 @@ targets:
          LSApplicationCategoryType: ${DM_APP_CATEGORY}   # game profile app_category
          DMShowFPS: ${DM_SHOW_FPS}           # YES = the frame-rate counter is on (front_ios.m; set by build_ipa.sh)
          DMLanguage: ${DM_LANG}              # the game language code (main.m sets DM_LANG from it; set by build_ipa.sh)
