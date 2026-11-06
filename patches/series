@@ -80,3 +80,4 @@
 0202-silksong-keep-the-resolution-site-lists-out-of-t.patch
 0203-ios-tests-give-the-romfs-locator-fixture-the-pro.patch
 0204-docs-regenerate-the-env-switch-table.patch
+0205-ios-game-mode-on-by-default-in-every-build.patch
