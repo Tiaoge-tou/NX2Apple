@@ -73,6 +73,12 @@
             "value": "120 Hz"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 Hz"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -111,6 +117,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "120 Hz richiede uno schermo che lo supporti e torna a 60 Hz su uno che non lo supporta. Un carico pesante prolungato può causare limitazioni dovute al calore, usare con cautela."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "120 Hz には対応画面が必要です。非対応の画面では 60 Hz に戻ります。高負荷が続くと発熱で速度が落ちることがあります。"
           }
         },
         "sv": {
@@ -286,6 +298,12 @@
           }
         },
         "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60 Hz"
+          }
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "60 Hz"
@@ -929,6 +947,12 @@
             "value": "Attacco"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "攻撃"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -1013,6 +1037,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Zaino"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バッグ"
           }
         },
         "sv": {
@@ -1101,6 +1131,12 @@
             "value": "Legame"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バインド"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -1139,6 +1175,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Black iron"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "黒鉄"
           }
         },
         "sv": {
@@ -1457,6 +1499,12 @@
             "value": "Predefinita"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内蔵"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -1497,6 +1545,12 @@
             "value": "Posizione predefinita"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内蔵の位置"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -1535,6 +1589,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Disposizione dei tasti"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ボタン配置"
           }
         },
         "sv": {
@@ -1621,6 +1681,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Aspetto dei pulsanti"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ボタンスキン"
           }
         },
         "sv": {
@@ -2077,6 +2143,12 @@
             "value": "Scegli un tasto per cambiarne la dimensione, o trascinalo in un nuovo posto."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キーを選択してサイズを変更するか、ドラッグして移動できます。"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -2207,6 +2279,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scegli file immagine…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像ファイルを選択…"
           }
         },
         "sv": {
@@ -2385,6 +2463,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Artiglio"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クローライン"
           }
         },
         "sv": {
@@ -3115,6 +3199,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scatto"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダッシュ"
           }
         },
         "sv": {
@@ -4029,6 +4119,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Occhio"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目"
           }
         },
         "sv": {
@@ -5175,6 +5271,12 @@
             "value": "Glass"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ガラス"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -5215,6 +5317,12 @@
             "value": "Glass sono i tasti in vetro, Moon è la skin illustrata e Moon (distintivi) è la skin illustrata con distintivi a lettere."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ガラスはガラスのキー、月は絵柄スキン、月（バッジ）は文字バッジ付きの絵柄スキンです。"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -5253,6 +5361,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Glass sono i tasti in vetro, Thorn è la skin illustrata, Thorn (distintivi) è la skin illustrata con distintivi a lettere e Black iron è la skin illustrata in anelli di ferro nero."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ガラスはガラスのキー、いばらは絵柄スキン、いばら（バッジ）は文字バッジ付きの絵柄スキン、黒鉄は黒鉄のリング付き絵柄スキンです。"
           }
         },
         "sv": {
@@ -5893,6 +6007,12 @@
             "value": "Salto"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ジャンプ"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -6531,6 +6651,12 @@
             "value": "Mappa"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マップ"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -6755,6 +6881,12 @@
             "value": "Moon"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -6793,6 +6925,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Moon (distintivi)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月（バッジ）"
           }
         },
         "sv": {
@@ -7203,6 +7341,12 @@
             "value": "Sposta i tasti di combattimento di questo gioco e cambia la loro dimensione."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このゲームの戦闘キーを移動し、サイズを変更します。"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -7379,6 +7523,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Needolin"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ニードリン"
           }
         },
         "sv": {
@@ -8019,6 +8169,12 @@
             "value": "Qui si dispongono solo i tasti di combattimento. Le pagine del titolo e dello zaino mantengono la loro disposizione."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ここで配置できるのは戦闘キーだけです。タイトルとバッグのページはレイアウトがそのままです。"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -8057,6 +8213,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apre l'editor della disposizione dei tasti"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ボタン配置エディターを開く"
           }
         },
         "sv": {
@@ -8281,6 +8443,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pausa"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一時停止"
           }
         },
         "sv": {
@@ -8967,6 +9135,12 @@
             "value": "Skin di anteprima: %@"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スキンのプレビュー: %@"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -9099,6 +9273,12 @@
             "value": "Riporta ogni tasto di questo gioco alla sua posizione e dimensione predefinite."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このゲームのすべてのキーを、内蔵の位置とサイズに戻します。"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -9229,6 +9409,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Frequenza di aggiornamento"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リフレッシュレート"
           }
         },
         "sv": {
@@ -9501,6 +9687,12 @@
             "value": "Reimposta tutti i tasti"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてのキーをリセット"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -9539,6 +9731,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reimpostare tutti i tasti?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてのキーをリセットしますか？"
           }
         },
         "sv": {
@@ -9625,6 +9823,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reimposta questo tasto"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このキーをリセット"
           }
         },
         "sv": {
@@ -11001,6 +11205,12 @@
             "value": "Il gioco usa la stessa disposizione nel suo editor di disposizione."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ゲーム内のレイアウトエディターでも同じ配置が使われます。"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -11133,6 +11343,12 @@
             "value": "Thorn"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "いばら"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",
@@ -11171,6 +11387,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Thorn (distintivi)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "いばら（バッジ）"
           }
         },
         "sv": {
@@ -11257,6 +11479,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Strumento"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ツール"
           }
         },
         "sv": {

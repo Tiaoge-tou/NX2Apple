@@ -1269,6 +1269,12 @@
             "value": "Nessun dato di gioco per %@ è stato trovato in questo file."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "そのファイルに %@ のゲームデータは見つかりませんでした。"
+          }
+        },
         "sv": {
           "stringUnit": {
             "state": "translated",

@@ -23,7 +23,7 @@ import Testing
         "Minus": ["de", "sv"], "Plus": ["de", "sv", "fr"],            // the Switch's buttons
         "Version %@": ["de", "sv", "fr"],
         "OK": ["de", "sv", "fr", "it", "ja"],
-        "60 Hz": ["de", "sv", "fr", "it"], "120 Hz": ["de", "sv", "fr", "it"],   // units, as the fps ones above
+        "60 Hz": ["de", "sv", "fr", "it", "ja"], "120 Hz": ["de", "sv", "fr", "it", "ja"],   // units, as the fps ones above
         "Glass": ["sv", "it"], "Thorn": ["sv", "it"], "Moon": ["sv", "it"], "Black iron": ["sv", "it"],   // skin names this fork adds
         "Bind": ["sv"], "Needolin": ["de", "sv", "fr", "it"], "Pause": ["de", "fr"],   // key names: words, and a name from the game
     ]
