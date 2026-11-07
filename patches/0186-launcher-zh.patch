@@ -1,6 +1,6 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Thu, 5 Nov 2026 17:39:02 +0000
+Date: Sat, 7 Nov 2026 15:55:57 +0000
 Subject: [PATCH] Launcher in Chinese, and the frame-rate and skin choices in 
  the settings list
 
@@ -30,10 +30,10 @@ index 13ce76a..3c4a829 100644
 +# The launcher's button-skin toggle for this game (settings.tsv DM_SILK_SKIN): the pad's image skin, or its glass controls
 +pad_skin_toggle	on
 diff --git a/dm/games/settings.tsv b/dm/games/settings.tsv
-index 821909c..7532eaf 100644
+index 75f5e62..b903259 100644
 --- a/dm/games/settings.tsv
 +++ b/dm/games/settings.tsv
-@@ -14,24 +14,27 @@
+@@ -14,25 +14,28 @@
  #   label, note  the setting's name and the line under it (may be empty; only for a setting with a cost: latency, memory, heat)
  #   meta      optional, key=value pairs separated by ; (settings.py META lists the keys; docs/frontends.md, The settings list, describes them):
  #             level=basic  a setting a front end shows first;  needs=<VAR>=<value>  a sub-setting, drawn only while the row that sets <VAR> has that value
@@ -63,9 +63,10 @@ index 821909c..7532eaf 100644
 +DM_RUMBLE	toggle	-	1	always	Controls	游戏震动	游戏内震动传到手机或手柄	level=basic
 +DM_RUMBLE_GAIN	range	0:3:0.1	1.0	always	Controls	震动强度	与游戏内的震动设置叠加生效	needs=DM_RUMBLE=1
 +DM_RUMBLE_MIN	range	0:0.9:0.05	0	always	Controls	震动下限
+ DM_PAD_PRESS_TO_JOIN	toggle	-	0	always	Controls	Press a button to join
 +DM_HADES_SKIN	choice	0=默认,1=冥月,2=冥月（角标）	1	DM_GAME_DISPLAY_WIDE!=0	Controls	按键皮肤	默认 = 玻璃按键；冥月 = 图标皮肤；冥月（角标）= 带字母角标的图标皮肤	
 +DM_SILK_SKIN	choice	0=默认,1=黑荆棘,2=黑荆棘（角标）,3=黑铁	1	DM_GAME_PAD_SKIN_TOGGLE!=0	Controls	按键皮肤	默认 = 玻璃按键；黑荆棘 = 图标皮肤；黑荆棘（角标）= 带字母角标的图标皮肤；黑铁 = 黑铁金属外框的图标皮肤	
- DM_SCREEN_ASPECT	choice	1.43=iPhone Duo screen (1.43:1),0=16:9 (Switch)	1.43|0	DM_GAME_SCREEN_ASPECT!=0	Game	Picture shape	Renders about a quarter more pixels: a little slower and warmer.
+ DM_SCREEN_ASPECT	choice	auto=Match screen?platform:ios,1.43=iPhone Duo screen (1.43:1),0=16:9 (Switch)	auto|0	DM_GAME_SCREEN_ASPECT!=0	Game	Picture shape	Renders about a quarter more pixels: a little slower and warmer.
 -DM_PRESENT_SNAP	toggle	-	DM_GAME_PRESENT_SNAP	gfxapi:nvn	Performance	Frame buffering	Up to one frame more display latency.
 -DM_PSO_MTL4	toggle	-	DM_GAME_PSO_MTL4|1	gfxapi:nvn	Performance	Metal 4 pipelines	Keeps a pipeline archive; uses more memory.
 -DM_PSO_PREBUILD	toggle	-	1	gfxapi:nvn	Performance	Pipeline prebuild	The first start waits a few minutes for it, once.	needs=DM_PSO_MTL4=1

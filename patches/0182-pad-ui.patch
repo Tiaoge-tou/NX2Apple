@@ -1,6 +1,6 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tiaoge-tou <85100527+Tiaoge-tou@users.noreply.github.com>
-Date: Thu, 5 Nov 2026 07:37:04 +0800
+Date: Sat, 7 Nov 2026 15:54:33 +0000
 Subject: [PATCH] Touch pad UI: the skin system, scene modes, bag and title 
  layouts, the layout editor, and the glass skin
 
@@ -18,7 +18,7 @@ Issue: Tiaoge-tou/NX2Apple PROJECT.md Phase 2
  1 file changed, 1054 insertions(+), 221 deletions(-)
 
 diff --git a/dm/ios/Sources/DmGamepad.m b/dm/ios/Sources/DmGamepad.m
-index 167cc49..c85594e 100644
+index 363d822..66d8ce5 100644
 --- a/dm/ios/Sources/DmGamepad.m
 +++ b/dm/ios/Sources/DmGamepad.m
 @@ -1,21 +1,16 @@
@@ -1508,21 +1508,23 @@ index 167cc49..c85594e 100644
      [CATransaction commit];
  }
  
-@@ -576,10 +1413,8 @@ static BOOL g_hintShown;   // once per launch
+@@ -577,12 +1414,10 @@ static BOOL g_hintShown;   // once per launch
  static pad_slots g_slots;
  static GCController *g_held[DM_PLAYERS];   // the controller of each slot, kept alive while it holds it (the slot table keys on its pointer)
- static int g_merge;
+ static int g_merge, g_press_to_join;
 -static pad_map g_padmap;   // DM_PAD_MAP affects physical controllers only
  static int32_t axis(float v) { return (int32_t)(fmaxf(-1.f, fminf(1.f, v)) * 32767); }
+ static const char *pad_name(GCController *c);
+ static void npad_name(int p, char *out, size_t cap);
  static void read_pad(GCExtendedGamepad *g) {
 -    front_ios_quit_poll(); if (front_ios_quit_blocks_input()) return;   // the quit prompt has the controllers (Home held 2 s, or Quit in the in-game menu)
-     int p = g_merge ? 0 : pad_slot_of(&g_slots, (__bridge const void *)g.controller); if (p < 0) return;
-     dm_haptics_apple_controller(p, g.controller);
+     int p = g_merge ? 0 : pad_slot_of(&g_slots, (__bridge const void *)g.controller); if (p < 0 && !g_press_to_join) return;
      _Static_assert(DM_BTN_A == 1u << B_A && DM_BTN_B == 1u << B_B && DM_BTN_X == 1u << B_X && DM_BTN_Y == 1u << B_Y, "face button bits");
-@@ -590,20 +1425,13 @@ static void read_pad(GCExtendedGamepad *g) {
-     if (g.leftThumbstickButton) K(g.leftThumbstickButton, B_LS); if (g.rightThumbstickButton) K(g.rightThumbstickButton, B_RS);
-     K(g.dpad.left, B_LEFT); K(g.dpad.up, B_UP); K(g.dpad.right, B_RIGHT); K(g.dpad.down, B_DOWN);
-     #undef K
+     uint64_t m = dm_pad_face(g);   // by position, a Nintendo pad by its labels
+@@ -600,20 +1435,13 @@ static void read_pad(GCExtendedGamepad *g) {
+         npad_name(p, nb, sizeof nb); LOG("controller '%s': a button pressed: player %d (npad %s)", pad_name(c), p + 1, nb);
+     }
+     dm_haptics_apple_controller(p, g.controller);
 -    m = pad_map_apply(&g_padmap, m);
      dm_pad_set_player(p, m, axis(g.leftThumbstick.xAxis.value), axis(g.leftThumbstick.yAxis.value), axis(g.rightThumbstick.xAxis.value), axis(g.rightThumbstick.yAxis.value));
  }
@@ -1539,9 +1541,9 @@ index 167cc49..c85594e 100644
 -    const char *pm = getenv("DM_PAD_MAP");
 -    if (pm && *pm) { int bad = pad_map_parse(&g_padmap, pm); LOG("front end: controller buttons from DM_PAD_MAP (%s)%s", pm, bad ? ", malformed entries left out" : ""); }
      const char *e = getenv("DM_PAD_MERGE"); g_merge = e && atoi(e);
+     e = getenv("DM_PAD_PRESS_TO_JOIN"); g_press_to_join = !g_merge && e && atoi(e);
      LOG("front end: %s", g_merge ? "every controller is player 1 (DM_PAD_MERGE)" : "each controller is a player of its own, the touch gamepad plays with player 1");
- }
-@@ -647,21 +1475,11 @@ static BOOL pads_slotted(GCController *gone) {
+@@ -665,21 +1493,11 @@ static BOOL pads_slotted(GCController *gone) {
      GCController *c = note.object, *gone = [note.name isEqual:GCControllerDidDisconnectNotification] ? c : nil;
      if (c && (!c.extendedGamepad || g_merge)) LOG("controller %s: %s%s", gone ? "disconnected" : "connected", pad_name(c), c.extendedGamepad ? "" : " (no extended gamepad profile: not used)");
      BOOL any = g_merge ? pads_merged(gone) : pads_slotted(gone);
@@ -1564,7 +1566,7 @@ index 167cc49..c85594e 100644
  void dm_gamepad_active(void) { dispatch_async(dispatch_get_main_queue(), ^{ for (GCController *c in GCController.controllers) dm_motion_rearm(c); }); }   // On become active: motion_apple.h
  void dm_gamepad_reset(void) {   // On resign active: release everything (a key held while switching away and released in background gets no "release")
      dispatch_async(dispatch_get_main_queue(), ^{ [g_view reset]; });
-@@ -669,3 +1487,18 @@ void dm_gamepad_reset(void) {   // On resign active: release everything (a key h
+@@ -687,3 +1505,18 @@ void dm_gamepad_reset(void) {   // On resign active: release everything (a key h
      if (g_merge) dm_pad_set(0, 0, 0, 0, 0);
      else for (int p = 0; p < DM_PLAYERS; p++) if (g_held[p]) dm_pad_set_player(p, 0, 0, 0, 0, 0);
  }

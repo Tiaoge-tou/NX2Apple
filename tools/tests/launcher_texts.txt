@@ -43,6 +43,7 @@ Japanese
 Keeps a pipeline archive; uses more memory.
 Korean
 Latin American Spanish
+Match screen
 Metal 4 pipelines
 MetalFX
 Moon
@@ -53,6 +54,7 @@ Picture
 Picture shape
 Pipeline prebuild
 Portuguese
+Press a button to join
 Refresh rate
 Render scale
 Renders about a quarter more pixels: a little slower and warmer.
